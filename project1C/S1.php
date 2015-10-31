@@ -14,9 +14,9 @@
 <div id='cssmenu'>
     <ul>
         <li class='active'><a href='http://localhost:1438/~cs143/S1.php'>Home</a></li>
-		<li><a href='http://localhost:1438/~cs143/I1.php'>Add Actor/Director </a></li>
-		<li><a href='http://localhost:1438/~cs143/I2.php'>Add Movie Information</a></li>
-		<li><a href='http://localhost:1438/~cs143/I3.php'>Add Comments to Movies</a></li>
+        <li ><a href='http://localhost:1438/~cs143/I1.php'>Add Actor/Director </a></li>
+        <li><a href='http://localhost:1438/~cs143/I2.php'>Add Movie Information</a></li>
+        <li><a href='http://localhost:1438/~cs143/I3.php'>Add Comments to Movies</a></li>
         <li><a href='http://localhost:1438/~cs143/I4.php'>Add Actor to Movie </a></li>
         <li><a href='http://localhost:1438/~cs143/I5.php'>Add Director to Movie</a></li>
     </ul>
@@ -57,44 +57,42 @@ if ($conn->connect_error) {
 	$parts = explode(" ",$keyword);
     $num_of_params=sizeof($parts);
     if($num_of_params == 1) {
-        $sql1 = "select concat(first,' ',last) as Actors from Actor where first like '%" . $parts[0] . "%' OR last LIKE '%" . $parts[0] . "%' order by first";
+        $sql1 = "select concat(first,' ',last) as Actors,dob from Actor where first like '%" . $parts[0] . "%' OR last LIKE '%" . $parts[0] . "%' order by first";
     }
     else if($num_of_params){
-        $sql1 = "select concat(first,' ',last) as Actors from Actor where (first like '%" . $parts[0] . "%' AND last LIKE '" . $parts[1] . "%' or first like '%" . $parts[1] . "%' AND last LIKE '" . $parts[0] . "%') order by first";
+        $sql1 = "select concat(first,' ',last) as Actors,dob from Actor where (first like '%" . $parts[0] . "%' AND last LIKE '" . $parts[1] . "%' or first like '%" . $parts[1] . "%' AND last LIKE '" . $parts[0] . "%') order by first";
     }
-    $sql2 = "select concat(title,' ',year) as MOVIES from Movie where title like '%".$keyword."%' order by title";
+    $sql2 = "select title,year from Movie where title like '%".$keyword."%' order by title";
 	$result_actor = $conn->query($sql1);
     $result_movie = $conn->query($sql2);
     /*echo $sql1." ".$sql2;*/
     if ($result_actor->num_rows > 0 or $result_movie->num_rows > 0) {
         if ($result_actor->num_rows > 0) {
-            echo "<table><tr>";
-            $field_info = $result_actor->fetch_fields();
-            foreach ($field_info as $val) {
-                echo "<th>" . $val->name . "</th>";
-            }
-            echo "</tr>";
+            echo "<h3>Actor/Actress Results:</h3>";
+            echo "<table class = 'zebra' style='width:100%'>";
+            echo "<tr><th>Serial Number</th><th>Actor Name</th><th>Date Of Birth</th></tr>";
+            $cnt = 1;
             while ($row = $result_actor->fetch_array()) {
-                echo "<tr>";
+                echo "<tr><td>".$cnt."</td>";
                 //echo "<td>" . $row['ACTOR'] .$row['DOB']. "</td>";
-                echo '<td><a href="B1.php?actor='. urlencode($row['Actors']).'">'.$row['Actors'].'</a></td>';
+                echo '<td><a href="/~cs143/B1.php?actor='. urlencode($row['Actors']).'">'.$row['Actors'].'</a></td>';
+                echo "<td>".$row['dob']."</td>";
                 echo "</tr>";
+                $cnt++;
             }
+            echo "</table>";
         }
         if ($result_movie->num_rows > 0) {
-            echo "<table><tr>";
-            $field_info = $result_movie->fetch_fields();
-            foreach ($field_info as $val) {
-                echo "<th>" . $val->name . "</th>";
-            }
-            echo "</tr>";
+            echo "<h3>Movie Results:</h3>";
+            echo "<table class='zebra' style='width:100%'>";
+            echo "<tr><th>Serial Number</th><th>Movie Name</th><th>Release Year</th></tr>";
+            $cnt = 1;
             while ($row = $result_movie->fetch_array()) {
-                echo "<tr>";
-                for ($x = 0; $x < count($field_info); $x++) {
-                    echo '<td><a href="/~cs143/B1.php?actor=Pierce+Brosnan">'.$row[$x].'</a></td>';
-                    /*echo "<a><td>" . $row[$x] . "</td>";*/
-                }
+                echo "<tr><td>" . $cnt . "</td>";
+                echo '<td><a href="#">' . $row['title'] . '</a></td>';
+                echo "<td>" . $row['year'] . "</td>";
                 echo "</tr>";
+                $cnt++;
             }
         }
     } else {
