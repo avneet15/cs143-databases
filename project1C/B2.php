@@ -84,7 +84,7 @@ if(isset($_GET['mid'])) {
 	//echo "--$mid--";
 	
 		
-	$select_query = "select CONCAT(first, ' ' , last) as name, first, last from Actor where id IN (select aid from MovieActor where mid=$mid)";
+	$select_query = "select CONCAT(first, ' ' , last) as name, first, last from Actor A inner join MovieActor MA on A.id = MA.aid where MA.mid =".$mid;
 	//echo $select_query."<br/><br/>";
 	$result = $conn->query($select_query);
 	if (!$result) {
