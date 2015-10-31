@@ -11,8 +11,11 @@
 <div id='cssmenu'>
     <ul>
         <li class='active'><a href='http://localhost:1438/~cs143/S1.php'>Home</a></li>
-        <li><a href='http://localhost:1438/~cs143/I4.php'>Add Actor for Movie </a></li>
-        <li><a href='http://localhost:1438/~cs143/I5.php'>Add Director for Movie</a></li>
+        <li ><a href='http://localhost:1438/~cs143/I1.php'>Add Actor/Director </a></li>
+        <li><a href='http://localhost:1438/~cs143/I2.php'>Add Movie Information</a></li>
+        <li><a href='http://localhost:1438/~cs143/I3.php'>Add Comments to Movies</a></li>
+        <li><a href='http://localhost:1438/~cs143/I4.php'>Add Actor to Movie </a></li>
+        <li><a href='http://localhost:1438/~cs143/I5.php'>Add Director to Movie</a></li>
     </ul>
 </div>
 
