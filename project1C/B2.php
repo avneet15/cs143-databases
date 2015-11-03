@@ -85,7 +85,8 @@ if(isset($_GET['mid'])) {
 	
 		
 	$select_query = "select CONCAT(first, ' ' , last) as name, first, last from Actor A inner join MovieActor MA on A.id = MA.aid where MA.mid =".$mid;
-	//echo $select_query."<br/><br/>";
+    //$select_query = "select CONCAT(first, ' ' , last) as name, first, last from Actor where id  = 1";
+
 	$result = $conn->query($select_query);
 	if (!$result) {
 	//echo $result;
@@ -102,15 +103,18 @@ if(isset($_GET['mid'])) {
 		$result = $conn->query($select_query);
 		
 		while ($row = mysqli_fetch_array($result)){
-			echo "<br/>Average score of the movie based on user feedbacks: <i>$row[0]</i></b><br/>";
+			echo "<br/>Average score of the movie based on user feedbacks: <b><i>$row[0]</i></b><br/>";
 		}
 		
-		$select_query = "select comment from Review where mid=$mid";
+		$select_query = "select comment,name,time,rating from Review where mid=$mid";
 		//echo $select_query."<br/><br/>";
 		$result = $conn->query($select_query);
 		echo "<br/><b>User comments:</b><br/><ol>";
 		while ($row = mysqli_fetch_array($result)){
-			echo "<li>$row[0]</li>";
+			echo "<li>On ".$row['time']." ".$row['name']." commented: <br/>";
+			echo "".$row['comment']."<br/>";
+			echo "<font color='red'>Rating given: ".$row['rating']."</font></li><br/>";
+
 		}
 		
 		echo "</ol><br/><a href='I3.php?mid=$mid' target=_blank>Add your review now!</a><br/><br/>";
