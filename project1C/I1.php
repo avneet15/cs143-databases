@@ -9,6 +9,8 @@
 	
 	<script src="chosen/chosen.jquery.js"></script>
 	<link rel="stylesheet" href="chosen/chosen.css">
+	<link rel="stylesheet" href="styles.css">
+
 </head>
 <body>
 <div id='cssmenu'>

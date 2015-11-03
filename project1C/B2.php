@@ -3,12 +3,15 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="styles.css">
     <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
     <script src="script.js"></script>
 	
 	<script src="chosen/chosen.jquery.js"></script>
 	<link rel="stylesheet" href="chosen/chosen.css">
+	<link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="styles.css">
+
+
 
 </head>
 <body>
@@ -111,9 +114,10 @@ if(isset($_GET['mid'])) {
 		$result = $conn->query($select_query);
 		echo "<br/><b>User comments:</b><br/><ol>";
 		while ($row = mysqli_fetch_array($result)){
-			echo "<li>On ".$row['time']." ".$row['name']." commented: <br/>";
-			echo "".$row['comment']."<br/>";
-			echo "<font color='red'>Rating given: ".$row['rating']."</font></li><br/>";
+			echo "On ".$row['time']." ".$row['name']." commented: <br/>";
+			echo "<div class='dialogbox'><div class='body'><span class='tip tip-up'></span><div class='message'>".$row['comment'].
+			"</div></div></div>";
+			echo "<font color='red'>Rating given: ".$row['rating']."</font><br/><br/>";
 
 		}
 		

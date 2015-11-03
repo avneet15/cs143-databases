@@ -9,6 +9,8 @@
 	
 	<script src="chosen/chosen.jquery.js"></script>
 	<link rel="stylesheet" href="chosen/chosen.css">
+	<link rel="stylesheet" href="styles.css">
+
 
 </head>
 <body>
@@ -84,7 +86,7 @@ if ($conn->connect_error) {
 			<br/><br/>
 			
 			Comment:
-			<br/><textarea rows="4" cols="50" name="comment" placeholder="max. 500 chaaracters"></textarea>
+			<br/><textarea rows="4" cols="50" name="comment" placeholder="max. 500 characters"></textarea>
 			<br/><br/>
 			<input type="submit" value="Submit">
 		</form>
