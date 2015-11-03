@@ -42,6 +42,10 @@ $conn->select_db("TEST");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+$query_rating = "select distinct rating as rating from Movie";
+$result_rating = $conn->query($query_rating);
+$query_genre = "select distinct genre as genre from MovieGenre";
+$result_genre = $conn->query($query_genre);
 ?>
 
 
@@ -49,52 +53,36 @@ if ($conn->connect_error) {
 <p><h3>Add a new movie</h3></p>
 		<form method="POST" action = "<?php echo htmlspecialchars($_SERVER['PHP_SELF']);?>">
 			
+			<table border =0>
+			<tr><td>Title:</td><td><input type="text" name="title"></td></tr>
 			
-			Title: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="title">
-			<br/><br/>
 			
-			Company: <input type="text" name="company">
-			<br/><br/>
+			<tr><td>Company:</td><td><input type="text" name="company"></td></tr>
 			
-			Year: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="year" placeholder="YYYY">
-			<br/><br/>
 			
-			Rating:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-			<select name="rating" class="chosen-select" style="width:50px;">
-				<option value="5" selected>5</option>
-				<option value="4">4</option>
-				<option value="3">3</option>
-				<option value="2">2</option>
-				<option value="1">1</option>
+			<tr><td>Year:</td><td><input type="text" name="year" placeholder="YYYY"></td></tr>
+			
+			
+			<tr><td>MPAA Rating:</td><td>
+			<select name="rating" class="chosen-select" style="width:70px;">
+			<?php
+			while ($row = $result_rating->fetch_array()) {
+				echo '<option value="' . $row['rating'] . '">' . $row['rating'] . '</option>';
+    		}
+    		?>
 			</select>
-			<br/><br/>
-			
-			                
-			<!--Genre: &nbsp;&nbsp;
-			<input type="checkbox" name="Action" value="Action"> Action
-			<input type="checkbox" name="Adventure" value="Adventure"> Adventure
-			<input type="checkbox" name="Animation" value="Animation"> Animation
-			<input type="checkbox" name="Comedy" value="Comedy"> Comedy
-			<input type="checkbox" name="Crime" value="Crime"> Crime
-			<input type="checkbox" name="Documentary" value="Documentary"> Documentary
-			<input type="checkbox" name="Drama" value="Drama"> Drama
-			<input type="checkbox" name="Family" value="Family"> Family
-			<input type="checkbox" name="Fantasy" value="Fantasy"> Fantasy
-			<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-			<input type="checkbox" name="Musical" value="Musical"> Musical
-			<input type="checkbox" name="Mystery" value="Mystery"> Mystery
-			<input type="checkbox" name="Romance" value="Romance"> Romance
-			<input type="checkbox" name="Sci-Fi" value="Sci-Fi"> Sci-Fi
-			<input type="checkbox" name="Short" value="Short"> Short
-			<input type="checkbox" name="Thriller" value="Thriller"> Thriller
-			<input type="checkbox" name="War" value="War"> War
-			<input type="checkbox" name="Western" value="Western"> Western
-			-->
-			
-			<br/><br/>
-			
-			
-			<input type="submit" value="Submit">
+		</td></tr>
+		<tr><td>Genre:</td></tr>	
+			<?php 
+
+			while ($row = $result_genre->fetch_array()) {
+				echo '<tr><td><input type="checkbox" name="gen[]" value="' . $row['genre'] . '">' . $row['genre'] . '</td></tr>';
+    		}  
+    		?>              
+			<br/>
+		</table>
+		<br/>
+			<input type="submit" value="Add Movie">
 		</form>
 		
 </p>
@@ -122,7 +110,8 @@ if(isset($_POST['title'])) {
 		//echo $max_movie_id;
 	}
 		
-		$insert_query = "insert into Movie(id, title, year, rating, company) values ($max_movie_id, '$title', '$year', $rating, '$company');";
+		$insert_query = "insert into Movie(id, title, year, rating, company) values ($max_movie_id, '$title', '$year', '$rating', '$company');";
+
 		//echo $insert_query."<br/><br/>";
 		$result = $conn->query($insert_query);
 		if (!$result) {
@@ -130,7 +119,14 @@ if(isset($_POST['title'])) {
 		echo "Error in inserting, please enter valid values!".mysqli_error($conn);
 		}
 		else {
-		echo "New Movie information added.";
+		if(isset($_POST['gen'])) {
+			$genre_arr[] = $_POST['genre'];
+			foreach ($_POST['gen'] as $genre) {
+				$genre_sql = "insert into MovieGenre values($max_movie_id,'$genre');";
+				$result = $conn->query($genre_sql);
+			}
+		}
+		echo "Information added for movie <b>".$title."</b>";
 		$update_query = "update MaxMovieID set id=".$max_movie_id;
 		$result = $conn->query($update_query);
 			if (!$result) {
