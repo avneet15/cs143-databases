@@ -62,7 +62,7 @@ if ($conn->connect_error) {
     else if($num_of_params){
         $sql1 = "select concat(first,' ',last) as Actors,dob from Actor where (first like '%" . $parts[0] . "%' AND last LIKE '" . $parts[1] . "%' or first like '%" . $parts[1] . "%' AND last LIKE '" . $parts[0] . "%') order by first";
     }
-    $sql2 = "select title,year from Movie where title like '%".$keyword."%' order by title";
+    $sql2 = "select title,year,id from Movie where title like '%".$keyword."%' order by title";
 	$result_actor = $conn->query($sql1);
     $result_movie = $conn->query($sql2);
     /*echo $sql1." ".$sql2;*/
@@ -89,7 +89,7 @@ if ($conn->connect_error) {
             $cnt = 1;
             while ($row = $result_movie->fetch_array()) {
                 echo "<tr><td>" . $cnt . "</td>";
-                echo '<td><a href="#">' . $row['title'] . '</a></td>';
+                echo '<td><a href="/~cs143/B2.php?mid='.urlencode($row['id']).'">' . $row['title'] . '</a></td>';
                 echo "<td>" . $row['year'] . "</td>";
                 echo "</tr>";
                 $cnt++;
