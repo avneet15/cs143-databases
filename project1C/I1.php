@@ -113,7 +113,7 @@ if(isset($_POST['person_type'])) {
 		echo "Error in inserting, please enter valid values!";
 		}
 		else {
-		echo "New person information added.";
+		echo "Information added for ".strtoupper($first_name." ".$last_name);
 		$update_query = "update MaxPersonID set id=".$max_person_id;
 		$result = $conn->query($update_query);
 			if (!$result) {
@@ -132,7 +132,7 @@ if(isset($_POST['person_type'])) {
 		echo "Error in inserting, please enter valid values!";
 		}
 		else {
-		echo "New person information added.";
+		echo "Information added for ".strtoupper($first_name." ".$last_name);
 		$update_query = "update MaxPersonID set id=".$max_person_id;
 		$result = $conn->query($update_query);
 			if (!$result) {
