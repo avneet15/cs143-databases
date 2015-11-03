@@ -49,7 +49,7 @@ $conn = new mysqli($servername, $username);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 } else {
-	$conn->select_db("TEST");
+	$conn->select_db("CS143");
 	$actor = test_input($_GET['actor']);
     echo "<h3 style='text-transform: uppercase';>$actor</h3>";
 	$parts = explode(" ",$actor);
@@ -93,7 +93,7 @@ $conn->close();
 
 <script>
 $(function(){
-    $(".chosen-select").chosen({
+    $(".chosen-select1").chosen({
 	disable_search_threshold: 10,
     no_results_text: "Oops, nothing found!",
 	});

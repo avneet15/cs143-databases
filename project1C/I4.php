@@ -45,10 +45,10 @@ $conn = new mysqli($servername, $username);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 } else {
-    $conn->select_db("TEST");
+    $conn->select_db("CS143");
     $query_actor = "select concat(first,' ',last) as name from Actor order by first";
     $result_actor = $conn->query($query_actor);
-    echo '<select name="Actor" class="chosen-select">';
+    echo '<select name="Actor" class="chosen-select" required>';
     while ($row = $result_actor->fetch_array()) {
         //echo $row['name'];
         echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
@@ -57,7 +57,7 @@ if ($conn->connect_error) {
     echo "<br/><b>Movie: </b>";
     $query_movie = "select title from Movie order by title";
     $result_movie = $conn->query($query_movie);
-    echo '<select name="Movie" class="chosen-select">';
+    echo '<select name="Movie" class="chosen-select" required>';
     while ($row = $result_movie->fetch_array()) {
         //echo $row['name'];
         echo '<option value="' . $row['title'] . '">' . $row['title'] . '</option>';
@@ -69,7 +69,7 @@ if ($conn->connect_error) {
     //echo $result_aid->num_rows;
 }
 ?>
-    <b>Role: </b><input type = "text" name ="role" style="font-size:10pt;width: 150px;height: 20px;" placeholder = "As Role"><br/><br/>
+    <b>Role: </b><input type = "text" name ="role" style="font-size:10pt;width: 150px;height: 20px;" placeholder = "As Role" required><br/><br/>
     <input type="submit" name = 'submit' value = "Add">
 </form>
 </p>
@@ -101,7 +101,7 @@ if(isset($_GET['submit'])) {
 $conn->close();
 ?>
 <script>
-    $(".chosen-select").chosen({
+    $(".chosen-select1").chosen({
 	disable_search_threshold: 10,
     no_results_text: "Oops, nothing found!"
 	});

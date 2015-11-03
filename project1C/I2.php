@@ -38,7 +38,7 @@ $username = "cs143";
 
 // Create connection
 $conn = new mysqli($servername, $username);
-$conn->select_db("TEST");
+$conn->select_db("CS143");
 
 // Check connection
 if ($conn->connect_error) {
@@ -56,17 +56,17 @@ $result_genre = $conn->query($query_genre);
 		<form method="POST" action = "<?php echo htmlspecialchars($_SERVER['PHP_SELF']);?>">
 			
 			<table border =0>
-			<tr><td>Title:</td><td><input type="text" name="title"></td></tr>
+			<tr><td>Title:</td><td><input type="text" name="title" required></td></tr>
 			
 			
-			<tr><td>Company:</td><td><input type="text" name="company"></td></tr>
+			<tr><td>Company:</td><td><input type="text" name="company" required></td></tr>
 			
 			
-			<tr><td>Year:</td><td><input type="text" name="year" placeholder="YYYY"></td></tr>
+			<tr><td>Year:</td><td><input type="number" name="year" value="2015" required></td></tr>
 			
 			
 			<tr><td>MPAA Rating:</td><td>
-			<select name="rating" class="chosen-select" style="width:70px;">
+			<select name="rating" class="chosen-select" required style="width:150px;">
 			<?php
 			while ($row = $result_rating->fetch_array()) {
 				echo '<option value="' . $row['rating'] . '">' . $row['rating'] . '</option>';
@@ -141,7 +141,7 @@ $conn->close();
 ?>
 <script>
 $(function(){
-    $(".chosen-select").chosen({
+    $(".chosen-select1").chosen({
 	disable_search_threshold: 10,
     no_results_text: "Oops, nothing found!",
 	});

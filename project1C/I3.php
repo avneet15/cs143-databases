@@ -39,7 +39,7 @@ $username = "cs143";
 
 // Create connection
 $conn = new mysqli($servername, $username);
-$conn->select_db("TEST");
+$conn->select_db("CS143");
 
 // Check connection
 if ($conn->connect_error) {
@@ -53,12 +53,12 @@ if ($conn->connect_error) {
 		<form method="POST" action = "<?php echo htmlspecialchars($_SERVER['PHP_SELF']);?>">
 			
 			
-			Name: &nbsp;&nbsp;<input type="text" name="name">
+			Name: &nbsp;&nbsp;<input type="text" name="name" required>
 			<br/><br/>
 			
 			Movie: &nbsp;
-			<select name="mid" class="chosen-select">
-			<option value="" disabled selected>Select your option</option>
+			<select name="mid" class="chosen-select" required>
+			<option value="">Select your option</option>
 			<?php 
 			$select_query = "select id, title from Movie";
 			$result = $conn->query($select_query);
@@ -119,7 +119,7 @@ if(isset($_POST['name'])) {
 $conn->close();
 ?>
 <script>
-    $(".chosen-select").chosen({
+    $(".chosen-select1").chosen({
 	disable_search_threshold: 10,
     no_results_text: "Oops, nothing found!"
 	});

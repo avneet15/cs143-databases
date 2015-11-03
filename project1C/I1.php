@@ -38,7 +38,7 @@ $username = "cs143";
 
 // Create connection
 $conn = new mysqli($servername, $username);
-$conn->select_db("TEST");
+$conn->select_db("CS143");
 
 // Check connection
 if ($conn->connect_error) {
@@ -53,15 +53,15 @@ if ($conn->connect_error) {
 			
 			
 			Actor or Director?
-				<select name="person_type" class="chosen-select">
-					<option value="Actor" selected>Actor</option>
+				<select name="person_type" class="chosen-select" required style="width:150px;">
+					<option value="Actor">Actor</option>
 					<option value="Director">Director</option>
 				</select>
 			<br/><br/>
 			
-			First name: <input type="text" name="first">
+			First name: <input type="text" name="first" required>
 			<br/><br/>
-			Last name: <input type="text" name="last">
+			Last name: <input type="text" name="last" required>
 			<br/><br/>
 			
 			Gender:
@@ -69,10 +69,10 @@ if ($conn->connect_error) {
 				<input type="radio" name="sex" value="female">Female
 			<br/><br/>
 			
-			Date of birth: &nbsp;&nbsp;<input type="text" name="dob" placeholder="YYYY-MM-DD">
+			Date of birth: &nbsp;&nbsp;<input type="date" name="dob" placeholder="YYYY-MM-DD" required>
 			<br/><br/>
 			
-			Date of death: &nbsp;<input type="text" name="dod" placeholder="YYYY-MM-DD">
+			Date of death: &nbsp;<input type="date" name="dod" placeholder="YYYY-MM-DD">
 			<br/>
 			
 			<br>
@@ -148,7 +148,7 @@ $conn->close();
 ?>
 <script>
 $(function(){
-    $(".chosen-select").chosen({
+    $(".chosen-select1").chosen({
 	disable_search_threshold: 10,
     no_results_text: "Oops, nothing found!",
 	});

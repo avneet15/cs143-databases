@@ -24,7 +24,7 @@
     </ul>
 </div>
 <p>
-<form method ="GET" action = "<?php echo htmlspecialchars($_SERVER['PHP_SELF']);?>">
+<form method ="GET" action = "<?php echo htmlspecialchars($_SERVER['PHP_SELF']);?>" id="myForm">
     <h3>Add Director for Movie:</h3><br>
     <b>Director: </b>
     <?php
@@ -46,10 +46,10 @@
 		echo "hi";
         die("Connection failed: " . $conn->connect_error);
     } else {
-        $conn->select_db("TEST");
+        $conn->select_db("CS143");
         $query_director = "select concat(first,' ',last) as name from Director order by first";
         $result_director = $conn->query($query_director);
-        echo '<select name="Director" class="chosen-select">';
+        echo '<select name="Director" class="chosen-select" required>';
         while ($row = $result_director->fetch_array()) {
             //echo $row['name'];
             echo '<option value="' . $row['name'] . '">' . $row['name'] . '</option>';
@@ -58,7 +58,7 @@
         echo "<br/><b>Movie: </b>";
         $query_movie = "select title from Movie order by title";
         $result_movie = $conn->query($query_movie);
-        echo '<select name="Movie" class="chosen-select">';
+        echo '<select name="Movie" class="chosen-select" required>';
         while ($row = $result_movie->fetch_array()) {
             //echo $row['name'];
             echo '<option value="' . $row['title'] . '">' . $row['title'] . '</option>';
@@ -97,11 +97,23 @@ $conn->close();
 ?>
 <script>
 $(function(){
-    $(".chosen-select").chosen({
+    $(".chosen-select1").chosen({
 	disable_search_threshold: 10,
     no_results_text: "Oops, nothing found!",
 	});
 });
+
+
+/* function validateForm() {
+console.log("inside validate");
+return false;
+var elements = document.getElementById("myForm").elements;
+
+for (var i = 0, element; element = elements[i++];) {
+    if (element.type === "text" && element.value === "")
+        return false;
+}
+} */
 </script>
 </body>
 </html>

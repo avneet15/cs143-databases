@@ -40,7 +40,7 @@ $username = "cs143";
 
 // Create connection
 $conn = new mysqli($servername, $username);
-$conn->select_db("TEST");
+$conn->select_db("CS143");
 
 // Check connection
 if ($conn->connect_error) {
@@ -55,7 +55,7 @@ if ($conn->connect_error) {
 			
 			
 			Movie: &nbsp;
-			<select name="mid" class="chosen-select">
+			<select name="mid" class="chosen-select" required>
 			<option value="" disabled selected>Select your option</option>
 			<?php 
 			$select_query = "select id, title from Movie";
@@ -128,7 +128,7 @@ if(isset($_GET['mid'])) {
 $conn->close();
 ?>
 <script>
-    $(".chosen-select").chosen({
+    $(".chosen-select1").chosen({
 	disable_search_threshold: 10,
     no_results_text: "Oops, nothing found!"
 	});	

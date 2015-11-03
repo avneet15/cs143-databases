@@ -28,7 +28,7 @@
 
 <form method ="GET" action = "<?php echo htmlspecialchars($_SERVER['PHP_SELF']);?>">
 	<h3>Search for an actor or movie:</h3><br/>
-	<input type = "text" name ="query" style="font-size:10pt;width: 200px;height: 22px;" placeholder = "Actor or Movie Name"><br/><br/>
+	<input type = "text" name ="query" style="font-size:10pt;width: 200px;height: 22px;" placeholder = "Actor or Movie Name" required><br/><br/>
 	<input type="submit" value = "Search">
 
 </form>
@@ -53,7 +53,7 @@ $conn = new mysqli($servername, $username);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 } else {
-	$conn->select_db("TEST");
+	$conn->select_db("CS143");
 	$keyword = test_input($_GET['query']);
 	$parts = explode(" ",$keyword);
     $num_of_params=sizeof($parts);
@@ -109,7 +109,7 @@ $conn->close();
 ?>
 <script>
 $(function(){
-    $(".chosen-select").chosen({
+    $(".chosen-select1").chosen({
 	disable_search_threshold: 10,
     no_results_text: "Oops, nothing found!",
 	});
