@@ -14,7 +14,7 @@
 <body>
 <div id='cssmenu'>
     <ul>
-        <li class='active'><a href='http://localhost:1438/~cs143/S1.php'>Home</a></li>
+        <li class='active'><a href='http://localhost:1438/~cs143/S1.php'>Search Movie or Actor</a></li>
 		<li><a href='http://localhost:1438/~cs143/I1.php'>Add Actor/Director </a></li>
 		<li><a href='http://localhost:1438/~cs143/I2.php'>Add Movie Information</a></li>
 		<li><a href='http://localhost:1438/~cs143/I3.php'>Add Comments to Movies</a></li>
@@ -95,7 +95,7 @@ if(isset($_GET['mid'])) {
 	else {
 		echo "<b>Actors in this Movie:</b><br/>";
 		while ($row = mysqli_fetch_array($result)){
-			echo "<a href='B1.php?actor=$row[1]%20$row[2]' target=_blank>$row[0]</a><br/>";
+			echo "<a href='B1.php?actor=$row[1]%20$row[2]'>$row[0]</a><br/>";
 		}
 		
 		$select_query = "select avg(rating) from Review where mid=$mid group by mid";
@@ -117,7 +117,7 @@ if(isset($_GET['mid'])) {
 
 		}
 		
-		echo "</ol><br/><a href='I3.php?mid=$mid' target=_blank>Add your review now!</a><br/><br/>";
+		echo "</ol><br/><a href='I3.php?mid=$mid'>Add your review now!</a><br/><br/>";
 	}
 	
 }
