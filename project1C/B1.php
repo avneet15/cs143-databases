@@ -66,12 +66,14 @@ if ($conn->connect_error) {
                 echo "<tr><td>" . $field_info[$x]->name . " : " . $row[$x] . "</td></tr>";
             }
         }
+        echo "</table>";
         $sql_role = "select title,role,mid from Movie M inner join MovieActor MA where MA.aid =".$aid." and MA.mid = M.id";
         $result_aux = $conn->query($sql_role);
         if ($result_aux->num_rows > 0) {
-            echo "<table>";
+            echo "<h3><i>Filmography</i></h3>";
+            echo "<table border = 1><tr><th>ROLE</th><th>MOVIE</th></tr>";
             while ($row = $result_aux->fetch_array()) {
-                echo "<tr><td>" .$row['role']." IN <a href='B2.php?mid=".$row['mid']."' target=_blank>".$row['title']."</a></td></tr>"; 
+                echo "<tr><td>" .$row['role']."</td><td><a href='B2.php?mid=".$row['mid']."'>".$row['title']."</a></td></tr>"; 
             }
         }
 
