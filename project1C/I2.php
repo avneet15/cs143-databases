@@ -90,8 +90,8 @@ $result_genre = $conn->query($query_genre);
 
 <?php
 if(isset($_POST['title'])) {
-    $title = test_input($_POST['title']);
-    $company = test_input($_POST['company']);
+    $title = str_replace("'", "\\'",test_input($_POST['title']));
+    $company = str_replace("'", "\\'",test_input($_POST['company']));
 	$year = test_input($_POST['year']);
 	$rating = test_input($_POST['rating']);
     

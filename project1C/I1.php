@@ -84,8 +84,8 @@ if ($conn->connect_error) {
 <?php
 if(isset($_POST['person_type'])) {
     $person_type = test_input($_POST['person_type']);
-    $first_name = test_input($_POST['first']);
-	$last_name = test_input($_POST['last']);
+    $first_name = str_replace("'", "\\'",test_input($_POST['first']));
+	$last_name = str_replace("'", "\\'",test_input($_POST['last']));
     $sex = test_input($_POST['sex']);
 	$dob = test_input($_POST['dob']);
     $dod = test_input($_POST['dod']);
@@ -105,7 +105,6 @@ if(isset($_POST['person_type'])) {
 		//echo $max_person_id;
 	}
     if($person_type == "Actor") {
-		
 		$insert_query = "insert into Actor(id, last, first, sex, dob, dod) values ($max_person_id, '$last_name', '$first_name', '$sex', '$dob', '$dod')";
 		//echo $insert_query."<br/><br/>";
 		$result = $conn->query($insert_query);

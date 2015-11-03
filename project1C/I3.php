@@ -94,9 +94,9 @@ if ($conn->connect_error) {
 
 <?php
 if(isset($_POST['name'])) {
-    $name = test_input($_POST['name']);
+    $name = str_replace("'", "\\'",test_input($_POST['name']));
     $mid = test_input($_POST['mid']);
-	$comment = test_input($_POST['comment']);
+	$comment = str_replace("'", "\\'",test_input($_POST['comment']));
 	$rating = test_input($_POST['rating']);
     
 	//echo "$name---$mid---$comment---$rating--";
