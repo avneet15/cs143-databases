@@ -81,7 +81,7 @@ if(isset($_GET['submit'])) {
     $query_mid = "select id from Movie where title='" . $movie . "'";
     $result_aid = $conn->query($query_aid);
     $result_mid = $conn->query($query_mid);
-    $role = test_input($_GET['role']);
+    $role = str_replace("'", "\\'",test_input($_GET['role']));
     if ($result_aid->num_rows > 0 and $result_mid->num_rows > 0) {
         $aid_row = $result_aid->fetch_assoc();
         $aid = $aid_row['id'];

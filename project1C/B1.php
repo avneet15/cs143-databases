@@ -50,8 +50,9 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 } else {
 	$conn->select_db("CS143");
-	$actor = test_input($_GET['actor']);
-    echo "<h3 style='text-transform: uppercase';>$actor</h3>";
+    $original_actor = test_input($_GET['actor']);
+	$actor = str_replace("'", "\\'",test_input($_GET['actor']));
+    echo "<h3 style='text-transform: uppercase';>$original_actor</h3>";
 	$parts = explode(" ",$actor);
     $sql_info= "select id,sex as SEX,dob as Dob,IFNULL(dod,'Still Alive') as Dod from Actor where first='" . $parts[0] . "' AND last ='" . $parts[1] . "'";
     $aid = 0;

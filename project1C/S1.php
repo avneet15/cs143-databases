@@ -54,7 +54,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 } else {
 	$conn->select_db("CS143");
-	$keyword = test_input($_GET['query']);
+	$keyword = str_replace("'", "\\'",test_input($_GET['query']));
 	$parts = explode(" ",$keyword);
     $num_of_params=sizeof($parts);
     if($num_of_params == 1) {
