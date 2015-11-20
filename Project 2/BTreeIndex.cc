@@ -77,7 +77,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 {	RC rc;
 	BTNonLeafNode root;
 	IndexCursor c;
-	int eid = 0;
 	BTLeafNode leaf;
 
 	rc = locate(key, c);
@@ -122,12 +121,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 			}
 		} else {
 				//More than 1 level exists
-				int eid = 0;
 				root.read(rootPid, pf);
 				locate(key, c);
+				int siblingKey;
+				int insertHt = -1;
+				PageId lowerPid;
 				leaf.read(c.pid, pf);
 				if(rc = leaf.insert(key, rid) < 0) {
-					recursiveInsert(key, rid, rootPid, 1, -1, int &siblingKey, &lowerPid);
+					recursiveInsert(key, rid, rootPid, 1, insertHt, siblingKey, lowerPid);
 				} else {
 					// Else insert was successful in leaf
 					leaf.write(c.pid, pf);
@@ -136,17 +137,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 			}
 
 		}
-		//Read into leaf and try to insert key
-		leaf.read(c.pid, pf);
-		if(rc = leaf.insert(key,rid) < 0){
-			//Need to insert and split
-
-
-		} else {
-			//Successful insert hence return
-			return 0;
-		}
-
 		return 0;
 }
 
@@ -157,10 +147,17 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId root_Pid, in
 
 	if(insertHeight == 0){
 		//Creating a new root thus initializeRoot,setRootPid and increase tree height by 1
+		BTNonLeafNode root;
+		PageId new_root_pid = pf.endPid();
+		root.initializeRoot(lowerPid, siblingKey, new_root_pid -1);
+		root.write(new_root_pid, pf);
+		rootPid = new_root_pid;
+		treeHeight = treeHeight + 1;
+		return 0; 
 	}
 
 	if(insertHeight == -1) {
-		if(currHeight < treeHeight -1) {
+		if(currHeight < treeHeight - 1) {
 			BTNonLeafNode root;
 			root.read(root_Pid,pf);
 			root.locateChildPtr(key, pid);
@@ -176,6 +173,7 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId root_Pid, in
 			int siblingKey;
 			leaf.read(pid, pf);
 			sibling.read(pf.endPid(), pf);
+
 			sibling.setNextNodePtr(leaf.getNextNodePtr());
 			leaf.setNextNodePtr(pf.endPid());
 
@@ -183,26 +181,39 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId root_Pid, in
 			leaf.insertAndSplit(key, rid, sibling, siblingKey);
 			leaf.write(pid, pf);
 
+			sibling.write(pf.endPid(), pf);
+
 			if(root.insert(key, pf.endPid()) < 0) {
 				BTNonLeafNode sibling;
 				sibling.read(pf.endPid(),pf);
 				root.insertAndSplit(key, pf.endPid(), sibling, siblingKey);
+				root.write(root_Pid, pf);
+				sibling.write(pf.endPid(), pf);
 
 				insertHeight = currHeight - 1;
 				lowerPid = pf.endPid();
 			} else {
 				insertHeight = -2;
+				return 0;
 			}
 		}
 
 	} else if(insertHeight > 0){
 		if(currHeight == insertHeight) {
+			BTNonLeafNode root;
+			root.read(root_Pid, pf);
 			if(root.insert(key, pf.endPid()) < 0) {
 				BTNonLeafNode sibling;
 				sibling.read(pf.endPid(), pf);
 				root.insertAndSplit(key, pf.endPid(), sibling, siblingKey);
+				root.write(root_Pid, pf);
+				sibling.write(pf.endPid(), pf);
 				insertHeight = currHeight - 1;
-				lowerPid = pf.endPid();
+				if(insertHeight == 0){
+					lowerPid = root_Pid;
+				} else {
+					lowerPid = pf.endPid();
+				}	
 			}
 		}
 		return 0;

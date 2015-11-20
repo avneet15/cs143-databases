@@ -82,7 +82,7 @@ class BTreeIndex {
 
   PageId search(int searchKey, BTNonLeafNode current, int current_level);
 
-  RC recursiveInsert(int key, const RecordId& rid, BTNonLeafNode root, int currHeight, int &insertHeight, int &siblingKey);
+  RC recursiveInsert(int key, const RecordId& rid, PageId root_Pid, int currHeight, int& insertHeight, int& siblingKey, PageId& lowerPid);
 
   RC locate(int searchKey, IndexCursor& cursor);
 
