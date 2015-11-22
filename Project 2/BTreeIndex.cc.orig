@@ -21,7 +21,12 @@ using namespace std;
 BTreeIndex::BTreeIndex()
 {
     rootPid = -1;
+<<<<<<< HEAD
 	treeHeight = 0;
+=======
+    treeHeight = 0;
+
+>>>>>>> ef48ad18635d16fdfeb1ced2dd01be72ceb1d0b8
 }
 
 /*
@@ -324,6 +329,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 	
 	return 0;
 }
+
 
 PageId BTreeIndex::search(int searchKey, BTNonLeafNode current, int current_level)
 { 	PageId pid;
