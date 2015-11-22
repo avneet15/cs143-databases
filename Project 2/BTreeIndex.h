@@ -95,6 +95,8 @@ class BTreeIndex {
    * @return error code. 0 if no error
    */
 
+  PageId getRootPid();
+  int getTreeHeight();
 
   RC readForward(IndexCursor& cursor, int& key, RecordId& rid);
   

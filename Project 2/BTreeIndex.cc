@@ -21,6 +21,7 @@ using namespace std;
 BTreeIndex::BTreeIndex()
 {
     rootPid = -1;
+	treeHeight = 0;
 }
 
 /*
@@ -279,43 +280,46 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId root_Pid, in
  * @return 0 if searchKey is found. Othewise an error code
  */
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
-{	RC rc;
-	int eid = 0;
+{
+    RC rc;	
+	BTNonLeafNode midNode;
 	BTLeafNode leaf;
-	if(rootPid == -1){
-		return RC_END_OF_TREE;
-	}
-	if(treeHeight == 1){
-		//Only the leaf root exists
-		leaf.read(rootPid, pf);
-		if(rc = leaf.locate(searchKey, eid) < 0){
-			cursor.pid = rootPid;
-			cursor.eid = eid;
+	
+	int eid;
+	int currHeight = 1;
+	PageId nextPid = rootPid;
+	
+	while(currHeight!=treeHeight)
+	{
+		rc = midNode.read(nextPid, pf);
+		
+		if(rc!=0)
 			return rc;
-		} else {
-			cursor.pid = rootPid;
-			cursor.eid = eid;
-			return 0;
-		}
+		
+		rc = midNode.locateChildPtr(searchKey, nextPid);
+		
+		if(rc!=0)
+			return rc;
+		
+		currHeight++;
 	}
-
-	BTNonLeafNode root;
-	root.read(rootPid, pf);
-	if(root.getKeyCount() <= 0){
-		return RC_END_OF_TREE;
-	}
-	PageId pid = search(searchKey, root, 1);
-	leaf.read(pid, pf);
-	cursor.pid = pid;
-
-	if(rc = leaf.locate(searchKey, eid) < 0){
-		cursor.eid = eid;
+	
+	rc = leaf.read(nextPid, pf);
+		
+	if(rc!=0)
 		return rc;
-	}
-
+	
+	rc = leaf.locate(searchKey, eid);
+	
+	if(rc!=0)
+		return rc;
+	
 	cursor.eid = eid;
-    return 0;
+	cursor.pid = nextPid;
+	
+	return 0;
 }
+
 
 PageId BTreeIndex::search(int searchKey, BTNonLeafNode current, int current_level)
 { 	PageId pid;
@@ -341,17 +345,36 @@ PageId BTreeIndex::search(int searchKey, BTNonLeafNode current, int current_leve
  * @return error code. 0 if no error
  */
 RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
-{	RC rc;
-	char page[PageFile::PAGE_SIZE];
-	PageId pid = cursor.pid;
-	int eid = cursor.eid;
+{
+	RC rc;
 
-	if(rc = pf.read(pid, page) < 0){
+	BTLeafNode leaf;
+	rc = leaf.read(cursor.pid, pf);
+	
+	if(rc!=0)
 		return rc;
+	
+	rc = leaf.readEntry(cursor.eid, key, rid);
+	
+	if(rc!=0)
+		return rc;
+		
+	if(cursor.eid+1 > leaf.getKeyCount()) {
+		cursor.eid = 1;
+		cursor.pid = leaf.getNextNodePtr();
 	}
+	else
+		cursor.eid++;
+	
+	return 0;
+}
 
-	char *p = page;
-	memcpy(&rid, p+((eid-1)*BTLeafNode::LEAF_ENTRY_SIZE), BTLeafNode::RECORD_ID_SIZE);
-	memcpy(&key, p+((eid-1)*BTLeafNode::LEAF_ENTRY_SIZE)+BTLeafNode::RECORD_ID_SIZE, BTLeafNode::KEY_SIZE);
-    return 0;
+PageId BTreeIndex::getRootPid()
+{
+	return rootPid;
+}
+
+int BTreeIndex::getTreeHeight()
+{
+	return treeHeight;
 }
