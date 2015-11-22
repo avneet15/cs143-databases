@@ -7,6 +7,21 @@
 
 using namespace std;
 
+void BTLeafNode::print()
+{
+	int key;
+	RecordId rid;
+	for(int i=1; i<=getKeyCount(); i++)
+	{
+	readEntry(i, key, rid);
+	cout << "-----------EID "<<i;	
+	cout << " KEY "<< key;	
+	cout << " PID "<<rid.pid;	
+	cout << " SID "<<rid.sid <<" ------------ "<< endl;	
+	}
+	
+}
+
 /*
  * Read the content of the node from the page pid in the PageFile pf.
  * @param pid[IN] the PageId to read
@@ -14,9 +29,7 @@ using namespace std;
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
-{ 
-	cout <<"Reading from page into buffer:\n";
-	
+{ 	
 return pf.read(pid,buffer);
    
 } 
@@ -29,7 +42,7 @@ return pf.read(pid,buffer);
  */
 RC BTLeafNode::write(PageId pid, PageFile& pf)
 { 	
-	cout <<"Writing from buffer to page: "<<buffer;
+	//cout <<"Writing from buffer to page: "<<buffer;
 	return pf.write(pid, buffer);
 		
 }
@@ -42,12 +55,12 @@ RC BTLeafNode::write(PageId pid, PageFile& pf)
 int BTLeafNode::getKeyCount()
 {	//Get pointer to the buffer associated with the node,which was populated when node was read.
 	char *p = buffer;
-	cout << "Buffer while fetching Key Count is "<<buffer<<"\n";
+	//cout << "Buffer while fetching Key Count is "<<buffer<<"\n";
 	int i;
   	int records = 0;
-  	fprintf(stdout, "Entry size is: %d\n",LEAF_ENTRY_SIZE);
+  	//fprintf(stdout, "Entry size is: %d\n",LEAF_ENTRY_SIZE);
   	for(i = RECORD_ID_SIZE;p[i];i+=LEAF_ENTRY_SIZE) {
-  		cout <<"Val is"<< p[i];
+  	//	cout <<"Val is"<< p[i];
   		records = records+1;
   	}
   	//cout <<"Current Key Count="<<records<<"\n";
@@ -86,6 +99,7 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
   	memmove(p+LEAF_ENTRY_SIZE,p,(no_of_records-(eid-1))*LEAF_ENTRY_SIZE);
   	memcpy(p,&rid,RECORD_ID_SIZE);
 	memcpy(p+RECORD_ID_SIZE,&key,KEY_SIZE);
+	fprintf(stdout, " SUCCESSFUL INSERT IN LEAF NODE AND KEY COUNT IS NOW %d \n", getKeyCount());
 	return 0;
 }
 
@@ -151,6 +165,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 	RecordId curr_rid;
 	for(curr_eid=1;curr_eid<=no_of_records;curr_eid+=1) {
 		readEntry(curr_eid,curr_key,curr_rid);
+		fprintf(stdout, "READ ENTRY NO: %d %d %d:%d\n",curr_eid,curr_key,curr_rid.pid,curr_rid.sid);
 		if(searchKey == curr_key) {
 			eid = curr_eid;
 			return 0;
@@ -159,8 +174,8 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 			eid = curr_eid;
 			break;
 		}
-		return RC_NO_SUCH_RECORD;
 	}
+	return RC_NO_SUCH_RECORD;
 }
 
 /*
@@ -173,7 +188,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 { 	RC rc;
 	char *p = buffer;
-	cout<<"Inside Read entry and buffer is "<<buffer;
+	//cout<<"Inside Read entry and buffer is "<<buffer;
 	int i;
 	if(eid <= 0 || eid>getKeyCount()) {
 		return RC_NO_SUCH_RECORD;
@@ -249,6 +264,21 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
  * @param pf[IN] PageFile to read from
  * @return 0 if successful. Return an error code if there is an error.
  */
+
+void BTNonLeafNode::print()
+{int key;
+	PageId pid;
+	
+	for(int i=1; i<= getKeyCount(); i++)
+	{
+	readEntryNonLeaf(i, key, pid);
+	cout << "-----------EID "<<i;	
+	cout << " KEY "<<key;	
+	cout << " PID "<<pid<<endl;	
+		
+	}
+	
+}
 RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
 { 
 

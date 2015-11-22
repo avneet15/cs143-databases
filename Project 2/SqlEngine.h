@@ -28,6 +28,9 @@ struct SelCond {
  */
 class SqlEngine {
  public:
+
+  static bool isIndex;
+
     
   /**
    * takes the user commands from commandline and executes them.

@@ -14,13 +14,14 @@
 #include <fstream>
 #include "Bruinbase.h"
 #include "SqlEngine.h"
- #include "BTreeIndex.h"
+#include "BTreeIndex.h"
 
 using namespace std;
 
 // external functions and variables for load file and sql command parsing 
 extern FILE* sqlin;
 int sqlparse(void);
+bool isIndex = false;
 
 
 RC SqlEngine::run(FILE* commandline)
@@ -69,11 +70,11 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   //check if any value conditions are conflicting
   bool valueConflict = false;
   std::string valEq = "";
-  
   for(int i=0; i<cond.size(); i++) {
     sc = cond[i];
     int tempVal = atoi(sc.value); //store the int-form value of the select condition
-     
+     //First check if Index exists
+
     //we only have to worry about conditions on keys that don't involve NE
     //all other select conditions will be considered outside of the B+ Tree
     if(sc.attr==1 && sc.comp!=SelCond::NE) {
@@ -81,36 +82,42 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
       switch (cond[i].comp) {
         case SelCond::EQ:
+          fprintf(stdout, "IN EQUALS\n");
           equalVal = tempVal;
           condIndex = i;
           break;
         
         case SelCond::GT:
-          if(tempVal >= min || min==-1) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
+          if(tempVal > min || min==-1) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
+          fprintf(stdout, "IN GT\n");
+
           isCondGE = false;
-          min = tempVal;
+          min = tempVal + 1;
           }
           break;
 
         case SelCond::LT:
           if(tempVal < max || max==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
           {
+          fprintf(stdout, "IN LT\n");
           isCondLE = true;
-          max = tempVal;
+          max = tempVal - 1;
           }
           break;
 
         case SelCond::GE:
-          if(tempVal > min || min==-1) //if the tempVal min is larger than our current min (or it's uninitialized), set GE
+          if(tempVal >= min || min==-1) //if the tempVal min is larger than our current min (or it's uninitialized), set GE
           {
+            fprintf(stdout, "IN GE\n");
           isCondGE = true;
           min = tempVal;
           }
           break;
 
         case SelCond::LE:
-          if(tempVal < max || max==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
+          if(tempVal <= max || max ==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
           {
+            fprintf(stdout, "IN LE\n");
           isCondLE = true;
           max = tempVal;
           }
@@ -118,16 +125,18 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
       }
     }
 
-    else if(sc.attr==2) //if we hit a value condition, update hasValCondOrValAttr and check for contradictions
+    else if(sc.attr == 2) //if we hit a value condition, update hasValCondOrValAttr and check for contradictions
     {
+      fprintf(stdout, "IN OUTER ATTR VALUE\n");
       hasValCondOrValAttr = true;
     }
   }
+    fprintf(stdout, "%d %d %d\n",max,min,equalVal);
   
   //if the index file does not exist, use normal select
   //similarly, unless we are interested in a count(*) without conditions, an empty condition array means we use normal select
   //we do this because using "select count(*) from table" could offer a speedup using the index file
-  if(tree.open(table + ".idx", 'r')!=0 || (!hasCond && attr!=4))
+  if(tree.open(table+".idx",'r') != 0 || (!hasCond))
   {
     // scan the table file from the beginning
     rid.pid = rid.sid = 0;
@@ -202,19 +211,18 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     count = 0;
     rid.pid = rid.sid = 0;
     hasCond = true; //set this in order to close index properly
-    
+    fprintf(stdout, " IN INDEX\n");
     //set the starting position for IndexCursor ic1
-    if(equalVal!=-1) //key must be equalVal
+    if(equalVal != -1) //key must be equalVal
       tree.locate(equalVal, ic1);
-    else if(min!=-1 && !isCondGE) //key must be greater than min
-      tree.locate(min+1, ic1);
-    else if(min!=-1 && isCondGE) //key must be at least min
-      tree.locate(min, ic1);
+    else if(min != -1) //Min is defined
+      tree.locate(min, ic1);    
     else
       tree.locate(0, ic1);
     
-    while(tree.readForward(ic1, key, rid)==0)
-    {
+    while(tree.readForward(ic1, key, rid) == 0)
+    { fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",ic1.pid,ic1.eid);
+
       if(!hasValCondOrValAttr && attr==4) //no need to read the records from disk
       {
           if(equalVal!=-1 && key!=equalVal)
@@ -366,7 +374,8 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
  
   if(index)
   {
-  
+  //isIndex = true;
+  fprintf(stdout, "WRITING IN INDEX \n");
   tree.open(table + ".idx", 'w');
   
   

@@ -43,7 +43,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 	if(p[0]) {
 		//Index has already been created so read the rootPid and tree height into the BTreeIndex
 		memcpy(&rootPid,p,BTLeafNode::PAGE_ID_SIZE);
-		memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE,sizeof(int));
+		memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE, sizeof(int));
 	} else {
 		//Index is being created for the first time
 	rootPid = -1;
@@ -53,6 +53,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 	pf.write(0, p);
 
 	}
+	fprintf(stdout, "OPENED INDEX FILE \n");
 
     return 0;
 }
@@ -63,10 +64,10 @@ RC BTreeIndex::open(const string& indexname, char mode)
  */
 RC BTreeIndex::close()
 {	RC rc;
-	//char page[PageFile::PAGE_SIZE];
-	//memcpy(page, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
-	//memcpy(page+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
-	//pf.write(0, page);
+	char page[PageFile::PAGE_SIZE];
+	memcpy(page, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
+	memcpy(page+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
+	pf.write(0, page);
 	if(rc = pf.close() < 0){
 		return rc;
 	}
@@ -86,15 +87,20 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	BTLeafNode leaf;
 
 	rc = locate(key, c);
+	fprintf(stdout, " LOCATED ENTRY AT %d %d \n", c.pid, c.eid);
 	if(rc == RC_END_OF_TREE) {
+		fprintf(stdout, "REACHED END OF TREE\n");
 		//First Key being inserted ever
 		//Create a new leaf node and insert value.Set this Node's pid as the rootPid
-		fprintf(stdout, "AA : %d\n", rc);
+		fprintf(stdout, "Creating new root : %d\n", rc);
 		PageId root_pid = pf.endPid();
 		leaf.read(root_pid, pf);
-		fprintf(stdout, "AB : %d\n", root_pid);
+		fprintf(stdout, "NEw ROOT PID IS : %d\n", root_pid);
 		leaf.insert(key, rid);
+		fprintf(stdout, "INSERTED IN 1st Leaf/root  : %d\n", root_pid);
+
 		leaf.write(root_pid, pf);
+		leaf.print();
 		rootPid = root_pid;
 		treeHeight = 1;
 		fprintf(stdout, "AC : %d\n", treeHeight);
@@ -103,16 +109,19 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		//If only leaf root exists yet
 		if(treeHeight == 1) {
 			//fprintf(stdout, "AD : %d\n", pid);
+			fprintf(stdout, "INSERTING IN TREE_HEIGHT = 1\n");
 			leaf.read(rootPid, pf);
+			fprintf(stdout, "TRYING TO INSERT IN LEAF AT PAGE ID:%d \n", rootPid);
 			if(rc = leaf.insert(key, rid) < 0) {
 				BTLeafNode sibling;
 				int siblingKey;
 				PageId siblingPid = pf.endPid();
-				fprintf(stdout, "AE : %d\n", siblingPid);
+				fprintf(stdout, "Newly created Sibling Pid is : %d\n", siblingPid);
 				sibling.read(siblingPid, pf);
 
 				leaf.insertAndSplit(key, rid, sibling, siblingKey);
 				leaf.write(rootPid, pf);
+				leaf.print();
 				fprintf(stdout, "AF : %d\n", rootPid);
 				sibling.setNextNodePtr(leaf.getNextNodePtr());
 				leaf.setNextNodePtr(siblingPid);
@@ -123,6 +132,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				root.initializeRoot(rootPid, key, siblingPid);
 				fprintf(stdout, "CC : %d\n", siblingPid);
 				root.write(new_root_pid, pf);
+				root.print();
 				rootPid = new_root_pid;
 				treeHeight = treeHeight + 1;
 				fprintf(stdout, "DD : %d\n", treeHeight);
@@ -130,6 +140,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 			} else {
 				leaf.write(rootPid, pf);
 				fprintf(stdout, "EE : %d\n", rootPid);
+				leaf.print();
 				return 0;
 			}
 		} else {
@@ -286,43 +297,46 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId root_Pid, in
  */
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
-    RC rc;	
-	BTNonLeafNode midNode;
+    RC rc;
+	int eid = 0;
 	BTLeafNode leaf;
-	
-	int eid;
-	int currHeight = 1;
-	PageId nextPid = rootPid;
-	
-	while(currHeight!=treeHeight)
-	{
-		rc = midNode.read(nextPid, pf);
-		
-		if(rc!=0)
-			return rc;
-		
-		rc = midNode.locateChildPtr(searchKey, nextPid);
-		
-		if(rc!=0)
-			return rc;
-		
-		currHeight++;
+	if(rootPid == -1){
+		return RC_END_OF_TREE;
 	}
-	
-	rc = leaf.read(nextPid, pf);
-		
-	if(rc!=0)
+	if(treeHeight == 1){
+		//Only the leaf root exists
+		fprintf(stdout, "LOCATING IN TREE WITH HT=1 and ROOT AT PAGE: %d\n",rootPid);
+		leaf.read(rootPid, pf);
+		leaf.print();
+		if(rc = leaf.locate(searchKey, eid) < 0){
+			cursor.pid = rootPid;
+			cursor.eid = eid;
+			fprintf(stdout, "ENTRY NOT FOUND BUT SHOULD BE AT %d:%d\n",cursor.pid,cursor.eid);
+			return rc;
+		} else {
+			cursor.pid = rootPid;
+			cursor.eid = eid;
+			fprintf(stdout, "ENTRY FOUND AT %d:%d\n",cursor.pid,cursor.eid);
+			return 0;
+		}
+	}
+
+	BTNonLeafNode root;
+	root.read(rootPid, pf);
+	if(root.getKeyCount() <= 0){
+		return RC_END_OF_TREE;
+	}
+	PageId pid = search(searchKey, root, 1);
+	leaf.read(pid, pf);
+	cursor.pid = pid;
+
+	if(rc = leaf.locate(searchKey, eid) < 0){
+		cursor.eid = eid;
 		return rc;
-	
-	rc = leaf.locate(searchKey, eid);
-	
-	if(rc!=0)
-		return rc;
-	
+	}
+
 	cursor.eid = eid;
-	cursor.pid = nextPid;
-	
-	return 0;
+    return 0;
 }
 
 

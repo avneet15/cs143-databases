@@ -9,7 +9,11 @@
 
 #ifndef RECORDFILE_H
 #define RECORDFILE_H
-
+#include "Bruinbase.h"
+#include <iostream>
+ #include <fstream>
+#include "RecordFile.h"
+#include <cstring>
 #include <string>
 #include "PageFile.h"
 
@@ -48,7 +52,7 @@ class RecordFile {
   static const int MAX_VALUE_LENGTH = 100;  
 
   // number of record slots per page
-  static const int RECORDS_PER_PAGE = (PageFile::PAGE_SIZE - sizeof(int))/ (sizeof(int) + MAX_VALUE_LENGTH);  
+  static const int RECORDS_PER_PAGE = (PageFile::PAGE_SIZE - sizeof(int))/ (sizeof(int) + MAX_VALUE_LENGTH);
     // Note that we subtract sizeof(int) from PAGE_SIZE because the first
     // four bytes in the page is used to store # records in the page.
 

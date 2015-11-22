@@ -24,6 +24,7 @@ class BTLeafNode {
     static const int PAGE_ID_SIZE = sizeof(PageId);
     static const int LEAF_ENTRY_SIZE = KEY_SIZE+RECORD_ID_SIZE;
     static const int NON_LEAF_ENTRY_SIZE = KEY_SIZE+PAGE_ID_SIZE;
+    void print();
    /**
     * Insert the (key, rid) pair to the node.
     * Remember that all keys inside a B+tree node should be kept sorted.
@@ -123,6 +124,8 @@ class BTNonLeafNode {
     static const int PAGE_ID_SIZE = sizeof(PageId);
     static const int LEAF_ENTRY_SIZE = KEY_SIZE+RECORD_ID_SIZE;
     static const int NON_LEAF_ENTRY_SIZE = KEY_SIZE+PAGE_ID_SIZE;
+
+    void print();
    /**
     * Insert a (key, pid) pair to the node.
     * Remember that all keys inside a B+tree node should be kept sorted.
