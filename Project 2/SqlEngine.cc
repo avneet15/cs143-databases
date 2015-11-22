@@ -14,6 +14,7 @@
 #include <fstream>
 #include "Bruinbase.h"
 #include "SqlEngine.h"
+ #include "BTreeIndex.h"
 
 using namespace std;
 
@@ -212,7 +213,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     else
       tree.locate(0, ic1);
     
-    while(tree.readForward(c, key, rid)==0)
+    while(tree.readForward(ic1, key, rid)==0)
     {
       if(!hasValCondOrValAttr && attr==4) //no need to read the records from disk
       {
@@ -316,7 +317,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           break;
       }
       
-      continue_while:
+      continue_while: ;
     } //while ends
   }
   

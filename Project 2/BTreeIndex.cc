@@ -97,7 +97,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	} else {
 		//If only leaf root exists yet
 		if(treeHeight == 1) {
-			fprintf(stdout, "AD : %d\n", pid);
+			//fprintf(stdout, "AD : %d\n", pid);
 			leaf.read(rootPid, pf);
 			if(rc = leaf.insert(key, rid) < 0) {
 				BTLeafNode sibling;
@@ -142,7 +142,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				} else {
 					// Else insert was successful in leaf
 					leaf.write(c.pid, pf);
-					fprintf(stdout, "HH : %d\n", pid);
+					//fprintf(stdout, "HH : %d\n", pid);
 					return 0;
 				}
 			}
