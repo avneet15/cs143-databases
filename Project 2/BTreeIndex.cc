@@ -46,7 +46,12 @@ RC BTreeIndex::open(const string& indexname, char mode)
 		memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE,sizeof(int));
 	} else {
 		//Index is being created for the first time
-		BTreeIndex();
+	rootPid = -1;
+	treeHeight = 0;		
+	memcpy(p, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
+	memcpy(p+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
+	pf.write(0, p);
+
 	}
 
     return 0;
@@ -58,10 +63,10 @@ RC BTreeIndex::open(const string& indexname, char mode)
  */
 RC BTreeIndex::close()
 {	RC rc;
-	char page[PageFile::PAGE_SIZE];
-	memcpy(page, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
-	memcpy(page+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
-	pf.write(0, page);
+	//char page[PageFile::PAGE_SIZE];
+	//memcpy(page, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
+	//memcpy(page+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
+	//pf.write(0, page);
 	if(rc = pf.close() < 0){
 		return rc;
 	}
