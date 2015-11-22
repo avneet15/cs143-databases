@@ -156,6 +156,8 @@ class BTNonLeafNode {
     */
     RC locateChildPtr(int searchKey, PageId& pid);
 
+    
+
    /**
     * Initialize the root node with (pid1, key, pid2).
     * @param pid1[IN] the first PageId to insert

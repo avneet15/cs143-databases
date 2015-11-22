@@ -83,40 +83,47 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	if(rc == RC_END_OF_TREE) {
 		//First Key being inserted ever
 		//Create a new leaf node and insert value.Set this Node's pid as the rootPid
+		fprintf(stdout, "AA : %d\n", rc);
 		PageId root_pid = pf.endPid();
 		leaf.read(root_pid, pf);
+		fprintf(stdout, "AB : %d\n", root_pid);
 		leaf.insert(key, rid);
 		leaf.write(root_pid, pf);
 		rootPid = root_pid;
 		treeHeight = 1;
+		fprintf(stdout, "AC : %d\n", treeHeight);
 		return 0;
 	} else {
 		//If only leaf root exists yet
 		if(treeHeight == 1) {
+			fprintf(stdout, "AD : %d\n", pid);
 			leaf.read(rootPid, pf);
 			if(rc = leaf.insert(key, rid) < 0) {
 				BTLeafNode sibling;
 				int siblingKey;
 				PageId siblingPid = pf.endPid();
+				fprintf(stdout, "AE : %d\n", siblingPid);
 				sibling.read(siblingPid, pf);
 
-				leaf.insertAndSplit(key,rid, sibling, siblingKey);
+				leaf.insertAndSplit(key, rid, sibling, siblingKey);
 				leaf.write(rootPid, pf);
-
+				fprintf(stdout, "AF : %d\n", rootPid);
 				sibling.setNextNodePtr(leaf.getNextNodePtr());
 				leaf.setNextNodePtr(siblingPid);
 				sibling.write(siblingPid, pf);
-
-				BTNonLeafNode root;
+				fprintf(stdout, "BB : %d\n", siblingPid);
 				PageId new_root_pid = pf.endPid();
 				root.read(new_root_pid, pf);
 				root.initializeRoot(rootPid, key, siblingPid);
+				fprintf(stdout, "CC : %d\n", siblingPid);
 				root.write(new_root_pid, pf);
 				rootPid = new_root_pid;
 				treeHeight = treeHeight + 1;
+				fprintf(stdout, "DD : %d\n", treeHeight);
 				return 0;
 			} else {
 				leaf.write(rootPid, pf);
+				fprintf(stdout, "EE : %d\n", rootPid);
 				return 0;
 			}
 		} else {
@@ -124,14 +131,17 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				root.read(rootPid, pf);
 				locate(key, c);
 				int siblingKey;
-				int insertHt = -1;
 				PageId lowerPid;
+				int insertHt = -1;
 				leaf.read(c.pid, pf);
+				fprintf(stdout, "FF : %d\n", c.pid);
 				if(rc = leaf.insert(key, rid) < 0) {
 					recursiveInsert(key, rid, rootPid, 1, insertHt, siblingKey, lowerPid);
+					fprintf(stdout, "GG : %d\n", key);
 				} else {
 					// Else insert was successful in leaf
 					leaf.write(c.pid, pf);
+					fprintf(stdout, "HH : %d\n", pid);
 					return 0;
 				}
 			}
@@ -142,83 +152,111 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
 RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId root_Pid, int currHeight, int& insertHeight, int& siblingKey, PageId& lowerPid) {
 	PageId pid;
-
-	if(insertHeight == -2) return 0;
-
-	if(insertHeight == 0){
-		//Creating a new root thus initializeRoot,setRootPid and increase tree height by 1
-		BTNonLeafNode root;
-		PageId new_root_pid = pf.endPid();
-		root.initializeRoot(lowerPid, siblingKey, new_root_pid -1);
-		root.write(new_root_pid, pf);
-		rootPid = new_root_pid;
-		treeHeight = treeHeight + 1;
-		return 0; 
+	if(insertHeight == -2) {
+		fprintf(stdout, "InsertHeight is= %d\n", insertHeight);
+		return 0;
 	}
-
 	if(insertHeight == -1) {
+		fprintf(stdout, "A\n");
 		if(currHeight < treeHeight - 1) {
+			fprintf(stdout, "B\n");
 			BTNonLeafNode root;
 			root.read(root_Pid,pf);
+			fprintf(stdout, "C : %d\n",root_Pid);
 			root.locateChildPtr(key, pid);
+			fprintf(stdout, "D : %d\n",pid);
 			BTNonLeafNode n;
+			fprintf(stdout, "E\n");
 			n.read(pid, pf);
+			fprintf(stdout, "F\n");
 			recursiveInsert(key, rid, pid, currHeight + 1, insertHeight, siblingKey, lowerPid);
+			fprintf(stdout, "G\n");
 		} else {
 			BTNonLeafNode root;
 			root.read(root_Pid,pf);
 			root.locateChildPtr(key, pid);
+			fprintf(stdout, "H : %d\n", pid);
 			BTLeafNode leaf;
 			BTLeafNode sibling;
 			int siblingKey;
+			PageId siblingPid = pf.endPid();
+			fprintf(stdout, "I : %d\n", siblingPid);
 			leaf.read(pid, pf);
-			sibling.read(pf.endPid(), pf);
+			sibling.read(siblingPid, pf);
 
 			sibling.setNextNodePtr(leaf.getNextNodePtr());
-			leaf.setNextNodePtr(pf.endPid());
-
+			fprintf(stdout, "J : %d\n", leaf.getNextNodePtr());
+			leaf.setNextNodePtr(siblingPid);
+			fprintf(stdout, "K : %d\n", siblingPid);
 
 			leaf.insertAndSplit(key, rid, sibling, siblingKey);
 			leaf.write(pid, pf);
+			fprintf(stdout, "L : %d\n", pid);
+			sibling.write(siblingPid, pf);
 
-			sibling.write(pf.endPid(), pf);
-
-			if(root.insert(key, pf.endPid()) < 0) {
-				BTNonLeafNode sibling;
-				sibling.read(pf.endPid(),pf);
-				root.insertAndSplit(key, pf.endPid(), sibling, siblingKey);
+			if(root.insert(siblingKey, siblingPid) < 0) {
+				BTNonLeafNode new_sibling;
+				int new_sibling_key;
+				new_sibling.read(pf.endPid(),pf);
+				root.insertAndSplit(siblingKey, pf.endPid(), new_sibling, new_sibling_key);
 				root.write(root_Pid, pf);
-				sibling.write(pf.endPid(), pf);
-
-				insertHeight = currHeight - 1;
+				fprintf(stdout, "M : %d\n", root_Pid);
 				lowerPid = pf.endPid();
+				new_sibling.write(pf.endPid(), pf);
+				fprintf(stdout, "N : %d\n", pf.endPid());
+				insertHeight = currHeight - 1;
+				fprintf(stdout, "O : %d\n", insertHeight);
+				return 0;
 			} else {
+				root.write(root_Pid, pf);
+				fprintf(stdout, "P : %d\n", root_Pid);
 				insertHeight = -2;
+				fprintf(stdout, "Q : %d\n", insertHeight);
 				return 0;
 			}
 		}
 
 	} else if(insertHeight > 0){
+		fprintf(stdout, "R : %d\n", insertHeight);
 		if(currHeight == insertHeight) {
 			BTNonLeafNode root;
 			root.read(root_Pid, pf);
-			if(root.insert(key, pf.endPid()) < 0) {
-				BTNonLeafNode sibling;
-				sibling.read(pf.endPid(), pf);
-				root.insertAndSplit(key, pf.endPid(), sibling, siblingKey);
+			fprintf(stdout, "S : %d\n", root_Pid);
+			if(root.insert(siblingKey, lowerPid) < 0) {
+				BTNonLeafNode new_sibling;
+				fprintf(stdout, "T : %d\n", siblingKey);
+				PageId new_sibling_Pid = pf.endPid();
+				int new_sibling_key;
+				new_sibling.read(new_sibling_Pid, pf);
+				fprintf(stdout, "U : %d\n", new_sibling_Pid);
+				root.insertAndSplit(siblingKey, lowerPid, new_sibling, new_sibling_key);
 				root.write(root_Pid, pf);
-				sibling.write(pf.endPid(), pf);
+				fprintf(stdout, "V : %d\n", root_Pid);
+				new_sibling.write(new_sibling_Pid, pf);
 				insertHeight = currHeight - 1;
 				if(insertHeight == 0){
-					lowerPid = root_Pid;
-				} else {
-					lowerPid = pf.endPid();
-				}	
+					//Creating a new root thus initializeRoot,setRootPid and increase tree height by 1
+					fprintf(stdout, "W : %d\n", insertHeight);
+					BTNonLeafNode new_root;
+					PageId new_root_pid = pf.endPid();
+					new_root.initializeRoot(root_Pid, siblingKey, new_sibling_Pid);
+					fprintf(stdout, "X : %d\n", root_Pid);
+					fprintf(stdout, "X : %d\n", new_sibling_Pid);
+					new_root.write(new_root_pid, pf);
+					rootPid = new_root_pid;
+					treeHeight = treeHeight + 1;
+					fprintf(stdout, "Y : %d\n", treeHeight);
+					return 0;
+					} 
+				lowerPid = new_sibling_Pid;
+				siblingKey = new_sibling_key;
+				fprintf(stdout, "Z : %d\n", lowerPid);
+				fprintf(stdout, "Z : %d\n", siblingKey);
 			}
 		}
 		return 0;
 	}
-
+	return 0;
 }
 
 
