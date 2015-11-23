@@ -112,7 +112,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 			//fprintf(stdout, "AD : %d\n", pid);
 			fprintf(stdout, "INSERTING IN TREE_HEIGHT = 1\n");
 			leaf.read(rootPid, pf);
-			fprintf(stdout, "TRYING TO INSERT IN LEAF AT PAGE ID:%d \n", rootPid);
+			//fprintf(stdout, "TRYING TO INSERT IN LEAF AT PAGE ID:%d \n", rootPid);
 			if(rc = leaf.insert(key, rid) < 0) {
 				BTLeafNode sibling;
 				int siblingKey;
@@ -122,15 +122,19 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
 				leaf.insertAndSplit(key, rid, sibling, siblingKey);
 				leaf.write(rootPid, pf);
+
 				leaf.print();
+				cout<<"***PRINTING SIBLING: ";
+				sibling.print();
 				fprintf(stdout, "AF : %d\n", rootPid);
 				sibling.setNextNodePtr(leaf.getNextNodePtr());
 				leaf.setNextNodePtr(siblingPid);
 				sibling.write(siblingPid, pf);
 				fprintf(stdout, "BB : %d\n", siblingPid);
 				PageId new_root_pid = pf.endPid();
+				cout<<"Newly created ROOT PID: "<<new_root_pid;
 				root.read(new_root_pid, pf);
-				root.initializeRoot(rootPid, key, siblingPid);
+				root.initializeRoot(rootPid, siblingKey, siblingPid);
 				fprintf(stdout, "CC : %d\n", siblingPid);
 				root.write(new_root_pid, pf);
 				root.print();
@@ -147,7 +151,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		} else {
 				//More than 1 level exists
 				root.read(rootPid, pf);
+				//cout<<"****ROOT PID = "<<rootPid;
 				locate(key, c);
+				//cout<<"CURSOR AT "<<c.pid<<":"<<c.eid;
 				int siblingKey;
 				PageId lowerPid;
 				int insertHt = -1;
@@ -324,6 +330,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 
 	BTNonLeafNode root;
 	root.read(rootPid, pf);
+	//cout<<"@@ROOT PID INSIDE LOCATE: "<<rootPid;
 	if(root.getKeyCount() <= 0){
 		return RC_END_OF_TREE;
 	}
@@ -345,6 +352,9 @@ PageId BTreeIndex::search(int searchKey, BTNonLeafNode current, int current_leve
 { 	PageId pid;
 	BTLeafNode leaf;
 	current.locateChildPtr(searchKey, pid);
+	//cout<<"###ROOT CONTENTS ARE: ";
+	current.print();
+	//cout <<"SEARCH AFTER LOCATING CHILD PTR\n"<<pid; 
 
 	if(current_level ==  treeHeight - 1) {
 		return pid;
