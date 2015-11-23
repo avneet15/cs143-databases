@@ -22,6 +22,7 @@ BTreeIndex::BTreeIndex()
 {
     rootPid = -1;
 	treeHeight = 0;
+	//std::fill(, end, 0);
 }
 
 /*
@@ -87,7 +88,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	BTLeafNode leaf;
 
 	rc = locate(key, c);
-	fprintf(stdout, " LOCATED ENTRY AT %d %d \n", c.pid, c.eid);
+	//fprintf(stdout, " LOCATED ENTRY AT %d %d \n", c.pid, c.eid);
 	if(rc == RC_END_OF_TREE) {
 		fprintf(stdout, "REACHED END OF TREE\n");
 		//First Key being inserted ever
@@ -305,18 +306,18 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 	}
 	if(treeHeight == 1){
 		//Only the leaf root exists
-		fprintf(stdout, "LOCATING IN TREE WITH HT=1 and ROOT AT PAGE: %d\n",rootPid);
+		//fprintf(stdout, "LOCATING IN TREE WITH HT=1 and ROOT AT PAGE: %d\n",rootPid);
 		leaf.read(rootPid, pf);
 		leaf.print();
 		if(rc = leaf.locate(searchKey, eid) < 0){
 			cursor.pid = rootPid;
 			cursor.eid = eid;
-			fprintf(stdout, "ENTRY NOT FOUND BUT SHOULD BE AT %d:%d\n",cursor.pid,cursor.eid);
+			//fprintf(stdout, "ENTRY NOT FOUND BUT SHOULD BE AT %d:%d\n",cursor.pid,cursor.eid);
 			return rc;
 		} else {
 			cursor.pid = rootPid;
 			cursor.eid = eid;
-			fprintf(stdout, "ENTRY FOUND AT %d:%d\n",cursor.pid,cursor.eid);
+			//fprintf(stdout, "ENTRY FOUND AT %d:%d\n",cursor.pid,cursor.eid);
 			return 0;
 		}
 	}
@@ -368,23 +369,40 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	RC rc;
 
 	BTLeafNode leaf;
+	//Checking if cursor has a value to point to
+	if(cursor.pid == -1) {
+		return RC_END_OF_TREE;
+	}
 	rc = leaf.read(cursor.pid, pf);
+	fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
 	
 	if(rc!=0)
 		return rc;
 	
 	rc = leaf.readEntry(cursor.eid, key, rid);
 	
-	if(rc!=0)
-		return rc;
+	//if(rc!=0)
+	//	return rc;
 		
-	if(cursor.eid+1 > leaf.getKeyCount()) {
-		cursor.eid = 1;
-		cursor.pid = leaf.getNextNodePtr();
+	if(cursor.eid == leaf.getKeyCount()) {
+		//At last key of leaf
+		if(leaf.getNextNodePtr() == -1){
+			//Next leaf node does not exist,reached end of index tree.
+			cursor.pid = -1;
+			//fprintf(stdout, "Reached End of Tree while reading forward..");
+			//return RC_END_OF_TREE;
+		} else {
+			//Sibling node exists
+			cursor.eid = 1;
+			cursor.pid = leaf.getNextNodePtr();
+			fprintf(stdout, "Read forward from sibling on page: %d", leaf.getNextNodePtr());
+
+		}	
 	}
-	else
+	else{
+		fprintf(stdout, "%s: %d\n","Reading forward from ",cursor.eid);
 		cursor.eid++;
-	
+	}	
 	return 0;
 }
 

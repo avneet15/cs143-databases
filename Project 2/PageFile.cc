@@ -172,6 +172,7 @@ RC PageFile::read(PageId pid, void* buffer) const
   memcpy(buffer, readCache[toEvict].buffer, PAGE_SIZE);
 
   // increase the page read count
+  fprintf(stdout, "READ PAGE:%d  of FD =%d \n",pid,fd);
   readCount++;
 
   return 0;

@@ -21,7 +21,8 @@ using namespace std;
 // external functions and variables for load file and sql command parsing 
 extern FILE* sqlin;
 int sqlparse(void);
-bool isIndex = false;
+//bool isIndex = false;
+//extern bool isIndex = false;
 
 
 RC SqlEngine::run(FILE* commandline)
@@ -136,7 +137,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   //if the index file does not exist, use normal select
   //similarly, unless we are interested in a count(*) without conditions, an empty condition array means we use normal select
   //we do this because using "select count(*) from table" could offer a speedup using the index file
-  if(tree.open(table+".idx",'r') != 0 || (!hasCond))
+  if(!SqlEngine::isIndex|| (!hasCond))
   {
     // scan the table file from the beginning
     rid.pid = rid.sid = 0;
@@ -213,15 +214,21 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     hasCond = true; //set this in order to close index properly
     fprintf(stdout, " IN INDEX\n");
     //set the starting position for IndexCursor ic1
-    if(equalVal != -1) //key must be equalVal
+    if(equalVal != -1) {
+      fprintf(stdout, "SEARCHING KEY WITH ==\n");//key must be equalVal
       tree.locate(equalVal, ic1);
-    else if(min != -1) //Min is defined
+     } 
+    else if(min != -1) {//Min is defined
+      fprintf(stdout, "SEARCHING KEY WITH >\n");
       tree.locate(min, ic1);    
-    else
+     } 
+    else{
+      fprintf(stdout, "SEARCHING KEY FROM BEGINNING \n");
       tree.locate(0, ic1);
+    } 
     
     while(tree.readForward(ic1, key, rid) == 0)
-    { fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",ic1.pid,ic1.eid);
+    {
 
       if(!hasValCondOrValAttr && attr==4) //no need to read the records from disk
       {
@@ -230,17 +237,14 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           
           if(max!=-1) //if there is a condition on LT or LE that fails, we are done
           {
-            if(isCondLE && key>max)
+            if(key>max)
               goto rangeExceeded;
-            else if(!isCondLE && key>=max)
-              goto rangeExceeded;
+            
           }
           
           if(min!=-1) //if there is a condition on GT or GE that fails, we are done
           {
-            if(isCondGE && key<min)
-              goto rangeExceeded;
-            else if(!isCondGE && key<=min)
+            if(key<min)
               goto rangeExceeded;
           }
           
@@ -363,7 +367,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
   
   
   ifstream tableData(loadfile.c_str());
-  
+  SqlEngine::isIndex = true;
   
   if(!tableData.is_open())
   fprintf(stderr, "Error: loadfile %s cannot be opened\n", loadfile.c_str());
@@ -377,18 +381,20 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
   //isIndex = true;
   fprintf(stdout, "WRITING IN INDEX \n");
   tree.open(table + ".idx", 'w');
-  
-  
+  int z=1;
     while(getline(tableData, line))
     {
-    parseLoadLine(line, key, value);
-    if(rf.append(key, value, rid)!=0)
-      return RC_FILE_WRITE_FAILED;
-    
-    if(tree.insert(key, rid)!=0)
-      return RC_FILE_WRITE_FAILED;
+      parseLoadLine(line, key, value);
+      if(rf.append(key, value, rid)!=0)
+        return RC_FILE_WRITE_FAILED;
+      cout<<"INSERTING ENTRY NO: "<<z;
+      
+      if(tree.insert(key, rid)!=0) {
+        return RC_FILE_WRITE_FAILED;  
+      } else {
+        z++;
+      }
     }
-    
     //tree.print();
 
   tree.close();
@@ -405,7 +411,6 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
   
   rf.close();
   tableData.close();
-  
   return rc;
 }
 

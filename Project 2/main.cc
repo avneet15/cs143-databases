@@ -23,6 +23,8 @@
 #include "RecordFile.h"
 #include "BTreeNode.h" 
 
+ bool SqlEngine::isIndex = false;
+
 int main()
 {
   // run the SQL engine taking user commands from standard input (console).
