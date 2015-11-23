@@ -7,6 +7,11 @@
 
 using namespace std;
 
+BTLeafNode::BTLeafNode()
+{
+std::fill(buffer, buffer + PageFile::PAGE_SIZE, 0); //init buffer
+}
+
 void BTLeafNode::print()
 {
 	int key;
@@ -14,11 +19,10 @@ void BTLeafNode::print()
 	for(int i=1; i<=getKeyCount(); i++)
 	{
 	readEntry(i, key, rid);
-	/*cout << "-----------EID "<<i;	
+	cout << "-----------EID "<<i;	
 	cout << " KEY "<< key;	
 	cout << " PID "<<rid.pid;	
-	cout << " SID "<<rid.sid <<" ------------ "<< endl;	
-	*/
+	cout << " SID "<<rid.sid <<" ------------ "<< endl;
 	}
 	
 }
@@ -240,6 +244,11 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
   memcpy(p+getKeyCount()*LEAF_ENTRY_SIZE,&pid,PAGE_ID_SIZE);
   //*(p+(no_of_records*entry_size)) = pid;
   return 0; 
+}
+
+BTNonLeafNode::BTNonLeafNode()
+{
+std::fill(buffer, buffer + PageFile::PAGE_SIZE, 0); //init buffer
 }
 
 /*
