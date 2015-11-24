@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2008 by The Regents of the University of California
  * Redistribution of this file is permitted under the terms of the GNU
@@ -93,7 +94,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		fprintf(stdout, "REACHED END OF TREE\n");
 		//First Key being inserted ever
 		//Create a new leaf node and insert value.Set this Node's pid as the rootPid
-		fprintf(stdout, "Creating new root : %d\n", rc);
+		fprintf(stdout, "Creating new root : RC code=>%d\n", rc);
 		PageId root_pid = pf.endPid();
 		leaf.read(root_pid, pf);
 		//fprintf(stdout, "NEW ROOT PID IS : %d\n", root_pid);
@@ -146,7 +147,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				return 0;
 			} else {
 				leaf.write(rootPid, pf);
-				fprintf(stdout, "Inserting in Leaf Root with at : %d\n", rootPid);
+				fprintf(stdout, "Inserting in Leaf Root with rootPid at : %d\n", rootPid);
 				leaf.print();
 				return 0;
 			}
@@ -317,7 +318,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 		if(rc = leaf.locate(searchKey, eid) < 0){
 			cursor.pid = rootPid;
 			cursor.eid = eid;
-			fprintf(stdout, "ENTRY NOT FOUND BUT SHOULD BE AT PID%d Entry:%d\n",cursor.pid,cursor.eid);
+			fprintf(stdout, "ENTRY NOT FOUND BUT SHOULD BE AT PID%d Entry ID:%d\n",cursor.pid,cursor.eid);
 			return rc;
 		} else {
 			cursor.pid = rootPid;

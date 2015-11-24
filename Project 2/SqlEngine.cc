@@ -367,7 +367,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
   
   
   ifstream tableData(loadfile.c_str());
-  SqlEngine::isIndex = true;
+  SqlEngine::isIndex = index;
   
   if(!tableData.is_open())
   fprintf(stderr, "Error: loadfile %s cannot be opened\n", loadfile.c_str());
@@ -396,7 +396,6 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
       }
     }
     //tree.print();
-
   tree.close();
   }
   else
