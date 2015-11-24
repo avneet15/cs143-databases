@@ -178,121 +178,109 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		return 0;
 }
 
-RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId root_Pid, int currHeight, int& insertHeight, int& siblingKey, PageId& lowerPid) {
+RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, int currHeight, int& insertHeight, int& siblingKey, PageId& siblingPid) {
 	PageId pid;
-	if(insertHeight == -2) {
+	BTNonLeafNode root;
+	/*if(insertHeight == -2) {
 		fprintf(stdout, "InsertHeight is= %d\n", insertHeight);
 		return 0;
 	}
-	if(insertHeight == -1) {
+	*/
 		//fprintf(stdout, "A\n");
-		if(currHeight < treeHeight - 1) {
-			fprintf(stdout, "TRAVERSING DOWN..\n");
-			BTNonLeafNode root;
-			root.read(root_Pid,pf);
-			fprintf(stdout, "CURRENT PID : %d\n",root_Pid);
+		if(currHeight < treeHeight) {
+			fprintf(stdout, "TRAVERSING DOWN FROM PID %d..\n",curr_pid);
+			root.read(curr_pid, pf);
 			root.locateChildPtr(key, pid);
 			fprintf(stdout, "NEED TO TRAVERSE PID: %d\n",pid);
-			recursiveInsert(key, rid, pid, currHeight + 1, insertHeight, siblingKey, lowerPid);
-		} else {
-			cout<<"AT ONE LEVEL UP..";
-			BTNonLeafNode root;
-			root.read(root_Pid,pf);
-			root.locateChildPtr(key, pid);
-			fprintf(stdout, "ENTRY TO BE INSERTED IN PAGE : %d\n", pid);
-			BTLeafNode leaf;
-			BTLeafNode sibling;
-			int siblingKey;
-			PageId siblingPid = pf.endPid();
-			fprintf(stdout, "NEW SIBLING PID : %d\n", siblingPid);
-			leaf.read(pid, pf);
-			sibling.read(siblingPid, pf);
+			recursiveInsert(key, rid, pid, currHeight + 1, insertHeight, siblingKey, siblingPid);
+			//Now insert it in parent which is at insertHeight
+			if(currHeight == insertHeight){
+				//Insert in parent node
+				cout<<"INSERTING AT UPPER LEVEL HAVING PID = "<<curr_pid<<" INSERT KEY = "<<siblingKey<<"INSERT PID  = "<<siblingPid<<"\n";
+				if(root.insert(siblingKey, siblingPid) < 0) {
+					//Insert and split current node
+					cout<<"INSERTING AND SPLITTING AT LEVEL"<<currHeight<<"\n";
+					BTNonLeafNode new_sibling;
+					//int siblingKey;
+					//PageId 
+					PageId new_sibling_Pid = pf.endPid();
+					//int new_sibling_key;
+					//Insert and Split using Sibling
+					new_sibling.read(new_sibling_Pid, pf);
+					root.insertAndSplit(siblingKey, siblingPid, new_sibling, siblingKey);
+					root.write(pid, pf);
+					new_sibling.write(new_sibling_Pid, pf);
+					cout<<"**CURRENT NODE::"<<"\n";
+					root.print();
+					cout<<"**SIBLING NODE::"<<"\n";
+					new_sibling.print();
 
-			sibling.setNextNodePtr(leaf.getNextNodePtr());
-			//fprintf(stdout, "NEW SIBLING PID: %d\n", leaf.getNextNodePtr());
-			leaf.setNextNodePtr(siblingPid);
-			//fprintf(stdout, "CURRENT SIBLING KEY : %d\n", siblingKey);
+					//Set sibling Pid and Key to be passed to above level
+					siblingPid = new_sibling_Pid;
+					insertHeight = currHeight - 1;
 
-			leaf.insertAndSplit(key, rid, sibling, siblingKey);
-			leaf.write(pid, pf);
-			fprintf(stdout, "INSERT AND SPLIT AT NODE : %d generated a new sibling with Key = %d\n", pid, siblingKey);
-			sibling.write(siblingPid, pf);
-			cout<<"INSERTING SIBLING KEY AT ABOVE LEVEL..\n";
-			if(root.insert(siblingKey, siblingPid) < 0) {
-				cout<<"LEVEL IS FULL SO SPLITTING..\n";
-				BTNonLeafNode new_sibling;
-				int new_sibling_key;
-				new_sibling.read(pf.endPid(),pf);
-				root.insertAndSplit(siblingKey, pf.endPid(), new_sibling, new_sibling_key);
-				cout<<"SIBLING IS GENERATED WITH KEY = "<<new_sibling_key<<" PID = "<<pf.endPid();
-				root.write(root_Pid, pf);
-				cout<<"---CURRENT NODE--:\n";
-				root.print();
-				//fprintf(stdout, "M : %d\n", root_Pid);
-				lowerPid = pf.endPid();
-				new_sibling.write(pf.endPid(), pf);
-				cout<<"---SIBLING NODE--:\n";
-				new_sibling.print();
-
-				//fprintf(stdout, "N : %d\n", pf.endPid());
-				insertHeight = currHeight - 1;
-				cout<<"INSERT IN HEIGHT:: "<<insertHeight<<"\n";
-				//fprintf(stdout, "O : %d\n", insertHeight);
-				return 0;
-			} else {
-				cout<<"SIBLING WAS INSERTED IN LEVEL:: "<<currHeight<<"\n";
-				root.write(root_Pid, pf);
-				fprintf(stdout, "AT PID : %d\n", root_Pid);
-				insertHeight = -2;
-				fprintf(stdout, "INSERT IN HEIGHT : %d\n", insertHeight);
-				return 0;
-			}
-		}
-
-	} else if(insertHeight > 0){
-		fprintf(stdout, "TRAVERSING UP ..AT HEIGHT %d\n", currHeight);
-		if(currHeight == insertHeight) {
-			cout<<"NEED TO INSERT AT CURRENT HEIGHT AT PID: "<<root_Pid<<"\n";
-			BTNonLeafNode root;
-			root.read(root_Pid, pf);
-			if(root.insert(siblingKey, lowerPid) < 0) {
-				BTNonLeafNode new_sibling;
-				fprintf(stdout, "Inserted at current level but need to split due to inserting KEY : %d\n", siblingKey);
-				PageId new_sibling_Pid = pf.endPid();
-				int new_sibling_key;
-				new_sibling.read(new_sibling_Pid, pf);
-				fprintf(stdout, "Created new sibling with PID =  : %d\n", new_sibling_Pid);
-				root.insertAndSplit(siblingKey, lowerPid, new_sibling, new_sibling_key);
-				root.write(root_Pid, pf);
-				fprintf(stdout, "New Sibling Key  =  : %d\n", new_sibling_key);
-				new_sibling.write(new_sibling_Pid, pf);
-				insertHeight = currHeight - 1;
-				fprintf(stdout, "INSERT IN HEIGHT : %d\n", insertHeight);
-
-				//Need to create new root and increment tree height
-				if(insertHeight == 0){
-					//Creating a new root thus initializeRoot,setRootPid and increase tree height by 1
-					fprintf(stdout, "CREATING NEW ROOT AND INCREMENTING HEIGHT : \n");
-					BTNonLeafNode new_root;
-					PageId new_root_pid = pf.endPid();
-					new_root.initializeRoot(root_Pid, siblingKey, new_sibling_Pid);
-					cout<<"LEFT PAGE:: "<<root_Pid<<" RIGHT PAGE:: "<<new_sibling_Pid<<"\n";
-					new_root.write(new_root_pid, pf);
-					rootPid = new_root_pid;
-					treeHeight = treeHeight + 1;
-					cout<<"TREE HEIGHT IS NOW "<<treeHeight<<"\n";
+					fprintf(stdout, "NEW SIBLING PID : %d AND SIBLING KEY = %d \n", siblingPid, siblingKey);
+					//Checking if this was the root level, as new root would have to be created
+					if(currHeight == 1){
+						fprintf(stdout, "CREATING NEW ROOT AND INCREMENTING HEIGHT : \n");
+						BTNonLeafNode new_root;
+						PageId new_root_pid = pf.endPid();
+						new_root.initializeRoot(curr_pid, siblingKey, new_sibling_Pid);
+						cout<<"LEFT PAGE:: "<<curr_pid<<" RIGHT PAGE:: "<<new_sibling_Pid<<"\n";
+						new_root.write(new_root_pid, pf);
+						rootPid = new_root_pid;
+						treeHeight = treeHeight + 1;
+						cout<<"TREE HEIGHT IS NOW "<<treeHeight<<"\n";
+						cout<<"INSERTION IS COMPLETED AND NEW ROOT CREATED AT PID: "<<rootPid<<"\n";
+						cout<<"NEW ROOT IS::\n";
+						new_root.print();
+						cout<<"\n";
+						return 0;
+					}
+					cout<<"CURRENT LEAF::\n";
+					root.print();
+				} else {
+					cout<<"INSERTION IS COMPLETED FOR LEVEL "<<currHeight<<"\n";
+					root.write(curr_pid, pf);
 					return 0;
-					} 
-				lowerPid = new_sibling_Pid;
-				cout<<"SETTING LOWER PID = "<<lowerPid<<"\n";
-				siblingKey = new_sibling_key;
-				cout<<"SETTING NEW KEY TO INSERT = "<<siblingKey<<"\n";
+				}
+
+			} else {
+				//Insertion is already successful
+				return 0;
 			}
+		} else {
+			cout<<"REACHED LEAF FOR INSERTION AT PID::"<<curr_pid<<"\n";
+			BTLeafNode leaf;
+			leaf.read(curr_pid, pf);
+
+			//Create a new sibling 
+			BTLeafNode sibling;
+			//int siblingKey;
+			//PageId 
+			siblingPid = pf.endPid();
+
+			//Insert and Split using Sibling
+			sibling.read(siblingPid, pf);
+			leaf.insertAndSplit(key, rid, sibling, siblingKey);
+
+			//Setting next pointers for leaf and sibling
+			sibling.setNextNodePtr(leaf.getNextNodePtr());
+			leaf.setNextNodePtr(siblingPid);
+			
+			fprintf(stdout, "NEW SIBLING PID : %d AND SIBLING KEY = %d \n", siblingPid, siblingKey);
+			//Writing leaf and sibling
+			leaf.write(curr_pid, pf);
+			sibling.write(siblingPid, pf);
+
+			//Pass the sibling key and sibling Pid implicitly
+
+			//Set insert at height
+			insertHeight = treeHeight - 1;
+
+			return 0;
 		}
-		return 0;
 	}
-	return 0;
-}
 
 
 /**

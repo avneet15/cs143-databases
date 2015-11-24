@@ -24,6 +24,7 @@ class BTLeafNode {
     static const int PAGE_ID_SIZE = sizeof(PageId);
     static const int LEAF_ENTRY_SIZE = KEY_SIZE+RECORD_ID_SIZE;
     static const int NON_LEAF_ENTRY_SIZE = KEY_SIZE+PAGE_ID_SIZE;
+    static const int MAX_KEYS = 2;
     
     void print();
 
@@ -127,6 +128,8 @@ class BTNonLeafNode {
     static const int PAGE_ID_SIZE = sizeof(PageId);
     static const int LEAF_ENTRY_SIZE = KEY_SIZE+RECORD_ID_SIZE;
     static const int NON_LEAF_ENTRY_SIZE = KEY_SIZE+PAGE_ID_SIZE;
+    static const int MAX_KEYS = 2;
+
 
     void print();
 
