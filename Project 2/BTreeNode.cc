@@ -19,10 +19,10 @@ void BTLeafNode::print()
 	for(int i=1; i<=getKeyCount(); i++)
 	{
 	readEntry(i, key, rid);
-	cout << "-----------EID "<<i;	
+	cout << "--Entry ID: "<<i;	
 	cout << " KEY "<< key;	
-	cout << " PID "<<rid.pid;	
-	cout << " SID "<<rid.sid <<" ------------ "<< endl;
+	cout << " RID.PID "<<rid.pid;	
+	cout << " RID.SID "<<rid.sid <<" --- "<< endl;
 	}
 	
 }
@@ -80,8 +80,8 @@ int BTLeafNode::getKeyCount()
  */
 RC BTLeafNode::insert(int key, const RecordId& rid)
 { 	int no_of_records = getKeyCount();
-	cout<<"---KEY COUNT BEFORE INSERT: "<<no_of_records;
-	if(no_of_records >= 70) {
+	cout<<"KEY COUNT BEFORE INSERT: "<<no_of_records;
+	if(no_of_records >= 3) {
 		return RC_NODE_FULL;
 	}
 	if(rid.pid<0 || rid.sid<0 || rid.sid > RecordFile::RECORDS_PER_PAGE){
@@ -107,6 +107,8 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
   	memcpy(p,&rid,RECORD_ID_SIZE);
   	//cout<<"-----Value at pointer P"<<*p;
 	memcpy(p+RECORD_ID_SIZE,&key,KEY_SIZE);
+	cout<<"\n****NODE AFTER INSERTION\n";
+	print();
 	fprintf(stdout, " SUCCESSFUL INSERT IN LEAF NODE AND KEY COUNT IS NOW %d \n", getKeyCount());
 	return 0;
 }
@@ -133,7 +135,8 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 		return RC_INVALID_RID;
 	}
 
-	int mid_record = ceil(no_of_records/2);
+	cout<<"NO OF RECORDS--> "<<no_of_records;
+	int mid_record = (no_of_records+1)/2;
 	char *next_p = sibling.buffer;
 	
 	memmove(next_p,p+(LEAF_ENTRY_SIZE*(mid_record)),(no_of_records-mid_record)*LEAF_ENTRY_SIZE);
@@ -141,25 +144,26 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	//Set lower half to 0's
 	std::fill(p+(LEAF_ENTRY_SIZE*(mid_record)),p+PageFile::PAGE_SIZE, 0); //init buffer
 
-	//if(rc=sibling.insert(key,rid) < 0){
-	//	return rc;
-	//}
+	cout<<"MID INDEX = "<<mid_record<<"\n";
 	int prev = mid_record-1;
 	int prev_key;
 	RecordId prev_rid;
+	//Prev key is the last key in current leaf node which was just split
+	cout<<"PREV INDEX = "<<prev<<"\n";
 	readEntry(prev,prev_key,prev_rid);
+	cout<<"PREV_KEY= "<<prev_key<<" NEW KEY: "<<key;
 	if(key<prev_key){
-		cout<<"INSERT AND SPLIT:: In old node "<<key;
+		cout<<"INSERT AND SPLIT:: Inserting in old node "<<key;
 		insert(key,rid);
 	} else {
 		sibling.insert(key,rid);
-		cout<<"INSERT AND SPLIT:: In sibling node "<<key;
+		cout<<"INSERT AND SPLIT:: Inserting in sibling node "<<key;
 
 	}
 
 	//setNextNodePtr(sibling.PageId); from BTreeIndex??
 	memcpy(&siblingKey,next_p+RECORD_ID_SIZE,KEY_SIZE);
-	cout<<"SIBLING KEY = "<<siblingKey;
+	cout<<"SIBLING KEY PASSED ABOVE= "<<siblingKey<<"\n";
 	return 0; 
 }
 
@@ -273,7 +277,7 @@ void BTNonLeafNode::print()
 	for(int i=1; i<= getKeyCount(); i++)
 	{
 	readEntryNonLeaf(i, key, pid);
-	cout << "-----------EID "<<i;	
+	cout << "-----------Entry Id "<<i;	
 	cout << " KEY "<<key;	
 	cout << " PID "<<pid<<endl;	
 		
@@ -296,9 +300,9 @@ RC BTNonLeafNode::readEntryNonLeaf(int eid, int& key, PageId& pid)
 	int i;
  	
 
-  	memcpy(&pid, p+((eid-1)*NON_LEAF_ENTRY_SIZE), PAGE_ID_SIZE);
-  	p = p+((eid-1)*NON_LEAF_ENTRY_SIZE);
-  	memcpy(&key, p+PAGE_ID_SIZE, KEY_SIZE);
+  	memcpy(&key, p+4+((eid-1)*NON_LEAF_ENTRY_SIZE), KEY_SIZE);
+  	p = p+4+((eid-1)*NON_LEAF_ENTRY_SIZE);
+  	memcpy(&pid, p+KEY_SIZE, PAGE_ID_SIZE);
 
   	return 0; 
 }
@@ -339,7 +343,7 @@ int BTNonLeafNode::getKeyCount()
  */
 RC BTNonLeafNode::insert(int key, PageId pid)
 { 	int no_of_records = getKeyCount();
-	if(no_of_records > 70) {
+	if(no_of_records >= 3) {
 		return RC_NODE_FULL;
 	}
 	if(pid<0){
@@ -359,10 +363,12 @@ RC BTNonLeafNode::insert(int key, PageId pid)
 	}
 	char *p = buffer;
 	
-  	p = p+((eid-1)*NON_LEAF_ENTRY_SIZE); 
-  	memmove(p+NON_LEAF_ENTRY_SIZE,p,((no_of_records-(eid-1))*(NON_LEAF_ENTRY_SIZE))); 
-	memcpy(p,&pid,PAGE_ID_SIZE);
-	memcpy(p+PAGE_ID_SIZE,&key,KEY_SIZE);
+	//Offseting p by 4 bytes for PID1:
+  	p = p+4+((eid-1)*NON_LEAF_ENTRY_SIZE); 
+  	memmove(p+NON_LEAF_ENTRY_SIZE, p, ((no_of_records-(eid-1))*(NON_LEAF_ENTRY_SIZE))); 
+	memcpy(p, &key, KEY_SIZE);
+	memcpy(p+KEY_SIZE, &pid, PAGE_ID_SIZE);
+
 	return 0; 
 }
 
@@ -395,19 +401,19 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 		//Newly inserted record is the middle one
 		midKey = key;
 		//Move the right half of current node into the sibling node
-		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*mid_record),(no_of_records-mid_record)* NON_LEAF_ENTRY_SIZE);
-		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record)),p+PageFile::PAGE_SIZE, 0); 
+		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*mid_record)+4,(no_of_records-mid_record)* NON_LEAF_ENTRY_SIZE);
+		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record))+4,p+PageFile::PAGE_SIZE, 0); 
 	} else if(key < mid_key) {
 		//Move from key + 1 entries into sibling node and insert new key in current node.
-		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*(mid_record+1)),(no_of_records-(mid_record+1))* NON_LEAF_ENTRY_SIZE);
-		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record)),p+PageFile::PAGE_SIZE, 0); 
+		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*(mid_record+1))+4,(no_of_records-(mid_record+1))* NON_LEAF_ENTRY_SIZE);
+		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record))+4,p+PageFile::PAGE_SIZE, 0); 
 
 		insert(key, pid);
 		midKey = mid_key;
 	} else if(key>mid_key){
 		//Move from key + 1 entries into sibling node and insert new key in sibling node.
-		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*(mid_record+1)),(no_of_records-(mid_record+1))* NON_LEAF_ENTRY_SIZE);
-		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record)),p+PageFile::PAGE_SIZE, 0); 
+		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*(mid_record+1))+4,(no_of_records-(mid_record+1))* NON_LEAF_ENTRY_SIZE);
+		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record))+4,p+PageFile::PAGE_SIZE, 0); 
 		sibling.insert(key, pid);
 		midKey = mid_key;
 	}
@@ -463,9 +469,13 @@ RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
 	}
 
 	char *p = buffer;
-	if(rc=insert(key,pid1) < 0){
+
+	//Setting the leftmost pointer once for new node
+	memcpy(p,&pid1,PAGE_ID_SIZE);
+
+
+	if(rc=insert(key,pid2) < 0){
 		return rc;
 	}
-	memcpy(p+NON_LEAF_ENTRY_SIZE,&pid2,PAGE_ID_SIZE);
 	return 0; 
 }

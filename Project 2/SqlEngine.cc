@@ -379,7 +379,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
   if(index)
   {
   //isIndex = true;
-  fprintf(stdout, "WRITING IN INDEX \n");
+  //fprintf(stdout, "WRITING IN INDEX \n");
   tree.open(table + ".idx", 'w');
   int z=1;
     while(getline(tableData, line))
@@ -387,7 +387,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
       parseLoadLine(line, key, value);
       if(rf.append(key, value, rid)!=0)
         return RC_FILE_WRITE_FAILED;
-      cout<<"INSERTING ENTRY NO: "<<z;
+      cout<<"----------------INSERTING ENTRY NO: "<<z<<"-----------------------\n";
       
       if(tree.insert(key, rid)!=0) {
         return RC_FILE_WRITE_FAILED;  
