@@ -122,9 +122,11 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				sibling.read(siblingPid, pf);
 
 				leaf.insertAndSplit(key, rid, sibling, siblingKey);
+				cout<<"***PRINTING CURRENT: \n";
+				leaf.print();
+
 				leaf.write(rootPid, pf);
 
-				leaf.print();
 				cout<<"***PRINTING SIBLING: \n";
 				sibling.print();
 				fprintf(stdout, "Existing Root Pid : %d\n", rootPid);

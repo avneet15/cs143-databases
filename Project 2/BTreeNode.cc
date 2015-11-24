@@ -139,31 +139,41 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 	int mid_record = (no_of_records+1)/2;
 	char *next_p = sibling.buffer;
 	
-	memmove(next_p,p+(LEAF_ENTRY_SIZE*(mid_record)),(no_of_records-mid_record)*LEAF_ENTRY_SIZE);
-
-	//Set lower half to 0's
-	std::fill(p+(LEAF_ENTRY_SIZE*(mid_record)),p+PageFile::PAGE_SIZE, 0); //init buffer
 
 	cout<<"MID INDEX = "<<mid_record<<"\n";
-	int prev = mid_record-1;
-	int prev_key;
-	RecordId prev_rid;
+	//int next = mid_record+1;
+	int mid_key;
+	RecordId mid_rid;
 	//Prev key is the last key in current leaf node which was just split
-	cout<<"PREV INDEX = "<<prev<<"\n";
-	readEntry(prev,prev_key,prev_rid);
-	cout<<"PREV_KEY= "<<prev_key<<" NEW KEY: "<<key;
-	if(key<prev_key){
+	//cout<<"NEXT INDEX = "<<next<<"\n";
+	readEntry(mid_record, mid_key, mid_rid);
+
+
+
+	cout<<"MID_KEY = "<<mid_key;
+	if(key < mid_key){
+		memmove(next_p,p+(LEAF_ENTRY_SIZE*(mid_record-1)),((no_of_records-(mid_record-1))*LEAF_ENTRY_SIZE));
+		//Set lower half to 0's
+		std::fill(p+(LEAF_ENTRY_SIZE*(mid_record-1)),p+PageFile::PAGE_SIZE, 0); //init buffer
 		cout<<"INSERT AND SPLIT:: Inserting in old node "<<key;
 		insert(key,rid);
+
 	} else {
+		memmove(next_p,p+(LEAF_ENTRY_SIZE*(mid_record)),((no_of_records-(mid_record))*LEAF_ENTRY_SIZE));
+		//Set lower half to 0's
+		std::fill(p+(LEAF_ENTRY_SIZE*(mid_record)),p+PageFile::PAGE_SIZE, 0); //init buffer
 		sibling.insert(key,rid);
 		cout<<"INSERT AND SPLIT:: Inserting in sibling node "<<key;
 
 	}
 
-	//setNextNodePtr(sibling.PageId); from BTreeIndex??
+	//Passing sibling key to be inserted in parent 
 	memcpy(&siblingKey,next_p+RECORD_ID_SIZE,KEY_SIZE);
+
+	
 	cout<<"SIBLING KEY PASSED ABOVE= "<<siblingKey<<"\n";
+	cout<<"Current node: \n";
+	print();
 	return 0; 
 }
 
@@ -221,7 +231,6 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
   	return 0; 
   	
 }
-
 /*
  * Return the pid of the next slibling node.
  * @return the PageId of the next sibling node 
@@ -388,43 +397,47 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 	char *p = buffer;
 	int no_of_records = getKeyCount();
 	int mid_record = (no_of_records+1)/2;
-	int prev_record = mid_record - 1;
+	int next_record = mid_record + 1;
 	char *next_p = sibling.buffer;
 	//Find the mid key for the non-leaf node
-	int mid_key,prev_key;
-	PageId mid_pid,prev_pid;
+	int mid_key, next_key;
+	PageId mid_pid, next_pid;
 
 	readEntryNonLeaf(mid_record, mid_key, mid_pid);
-	readEntryNonLeaf(prev_record, prev_key, prev_pid);
+	readEntryNonLeaf(next_record, next_key, next_pid);
 
-
-	if(key > prev_key && key < mid_key){
+	cout<<"MID KEY = "<<mid_key;
+	cout<<"NEXT KEY = "<<next_key;
+	if(key > mid_key && key < next_key){
+		cout<<"NEW KEY IS MID KEY = "<<key;
 		//Newly inserted record is the middle one
 		memcpy(next_p, &pid, PAGE_ID_SIZE);
 		next_p = next_p+PAGE_ID_SIZE;
 		midKey = key;
 		//Move the right half of current node into the sibling node
-		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*prev_record)+4,(no_of_records-prev_record)* NON_LEAF_ENTRY_SIZE);
-		std::fill(p+(NON_LEAF_ENTRY_SIZE*(prev_record))+4,p+PageFile::PAGE_SIZE, 0); 
+		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*mid_record)+4,(no_of_records-mid_record)* NON_LEAF_ENTRY_SIZE);
+		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record))+4,p+PageFile::PAGE_SIZE, 0); 
 	} else if(key < mid_key) {
 		//Move from key + 1 entries into sibling node and insert new key in current node.
 		memcpy(next_p, &mid_pid, PAGE_ID_SIZE);
 		next_p = next_p+PAGE_ID_SIZE;
 		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*(mid_record))+4,(no_of_records-(mid_record))* NON_LEAF_ENTRY_SIZE);
-		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record))+4,p+PageFile::PAGE_SIZE, 0); 
+		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record - 1))+4,p+PageFile::PAGE_SIZE, 0); 
 
 		insert(key, pid);
 		midKey = mid_key;
-	} else if(key>mid_key){
+		cout<<"MID KEY IS MID KEY= "<<midKey;
+	} else if(key > next_key){
 		//Move from key + 1 entries into sibling node and insert new key in sibling node.
-		memcpy(next_p, &mid_pid, PAGE_ID_SIZE);
+		memcpy(next_p, &next_pid, PAGE_ID_SIZE);
 		next_p = next_p+PAGE_ID_SIZE;
-		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*(mid_record))+4,(no_of_records-(mid_record))* NON_LEAF_ENTRY_SIZE);
-		std::fill(p+(NON_LEAF_ENTRY_SIZE*(prev_record))+4,p+PageFile::PAGE_SIZE, 0); 
+		memmove(next_p,p+(NON_LEAF_ENTRY_SIZE*(next_record))+4,(no_of_records-(next_record))* NON_LEAF_ENTRY_SIZE);
+		std::fill(p+(NON_LEAF_ENTRY_SIZE*(mid_record))+4,p+PageFile::PAGE_SIZE, 0); 
 		sibling.insert(key, pid);
-		midKey = mid_key;
+		midKey = next_key;
+		cout<<"NEXT KEY IS MID KEY= "<<midKey;
 	}
-	
+	cout<<"FINAL MID KEY"<<midKey;
 	//memcpy(&midKey,next_p+PAGE_ID_SIZE,KEY_SIZE);
 	return 0;
 }
