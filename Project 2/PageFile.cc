@@ -143,7 +143,7 @@ RC PageFile::read(PageId pid, void* buffer) const
         readCache[i].lastAccessed != 0) {
        memcpy(buffer, readCache[i].buffer, PAGE_SIZE);
        readCache[i].lastAccessed = ++cacheClock;
-       fprintf(stdout, "NOT READING PAGE KHALI FOKAT => BECAUSE CACHED\n");
+       //fprintf(stdout, "NOT READING PAGE KHALI FOKAT => BECAUSE CACHED\n");
        return 0;
     }
   }
@@ -173,7 +173,7 @@ RC PageFile::read(PageId pid, void* buffer) const
   memcpy(buffer, readCache[toEvict].buffer, PAGE_SIZE);
 
   // increase the page read count
-  fprintf(stdout, "READ PAGE:%d  of FD =%d \n",pid,fd);
+  fprintf(stdout, "READ PAGE: %d  of FD =%d \n",pid,fd);
   readCount++;
 
   return 0;

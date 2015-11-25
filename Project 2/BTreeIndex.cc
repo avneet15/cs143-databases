@@ -87,7 +87,10 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	BTNonLeafNode root;
 	IndexCursor c;
 	BTLeafNode leaf;
-
+	BTNonLeafNode nf;
+	cout<<"!!!!!!!!!!!! PAGE 3 !!!!!!!!!\n";
+	nf.read(3, pf);
+	nf.print();
 	rc = locate(key, c);
 	//fprintf(stdout, " LOCATED ENTRY AT %d %d \n", c.pid, c.eid);
 	if(rc == RC_END_OF_TREE) {
@@ -122,6 +125,10 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				sibling.read(siblingPid, pf);
 
 				leaf.insertAndSplit(key, rid, sibling, siblingKey);
+
+				//sibling.setNextNodePtr(leaf.getNextNodePtr());
+				leaf.setNextNodePtr(siblingPid);
+
 				cout<<"***PRINTING CURRENT: \n";
 				leaf.print();
 
@@ -129,9 +136,9 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 
 				cout<<"***PRINTING SIBLING: \n";
 				sibling.print();
-				fprintf(stdout, "Existing Root Pid : %d\n", rootPid);
-				sibling.setNextNodePtr(leaf.getNextNodePtr());
-				leaf.setNextNodePtr(siblingPid);
+
+				//fprintf(stdout, "Existing Root Pid : %d\n", rootPid);
+				
 				sibling.write(siblingPid, pf);
 				fprintf(stdout, "NEWLY CREATED SIBLING PID : %d\n", siblingPid);
 				PageId new_root_pid = pf.endPid();
@@ -158,6 +165,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				root.read(rootPid, pf);
 				//cout<<"****ROOT PID = "<<rootPid;
 				locate(key, c);
+				//cout<<"\n $$$LOCATE INSIDE INSERT ..PID"<<c.pid<<"\n";
 				//cout<<"CURSOR AT "<<c.pid<<":"<<c.eid;
 				int siblingKey;
 				PageId lowerPid;
@@ -211,12 +219,16 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 					//Insert and Split using Sibling
 					new_sibling.read(new_sibling_Pid, pf);
 					root.insertAndSplit(siblingKey, siblingPid, new_sibling, siblingKey);
-					root.write(pid, pf);
-					new_sibling.write(new_sibling_Pid, pf);
+
 					cout<<"**CURRENT NODE::"<<"\n";
 					root.print();
 					cout<<"**SIBLING NODE::"<<"\n";
 					new_sibling.print();
+
+					//Writing current and sibling node
+					root.write(curr_pid, pf);
+					new_sibling.write(new_sibling_Pid, pf);
+					
 
 					//Set sibling Pid and Key to be passed to above level
 					siblingPid = new_sibling_Pid;
@@ -264,14 +276,25 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 			siblingPid = pf.endPid();
 
 			//Insert and Split using Sibling
+			//Retrieve leaf's next Node Pointer
+			PageId next_node_ptr = leaf.getNextNodePtr();
+			cout<<"LEAFS's NEXT NODE PTR = "<<next_node_ptr;
 			sibling.read(siblingPid, pf);
 			leaf.insertAndSplit(key, rid, sibling, siblingKey);
 
 			//Setting next pointers for leaf and sibling
-			sibling.setNextNodePtr(leaf.getNextNodePtr());
+			//sibling.setNextNodePtr(next_node_ptr);
 			leaf.setNextNodePtr(siblingPid);
 			
 			fprintf(stdout, "NEW SIBLING PID : %d AND SIBLING KEY = %d \n", siblingPid, siblingKey);
+
+			//Printing current and sibling
+			cout<<"\n Current leaf node::\n";
+			leaf.print();
+			cout<<"\n Current sibling node::\n";
+			sibling.print();
+
+
 			//Writing leaf and sibling
 			leaf.write(curr_pid, pf);
 			sibling.write(siblingPid, pf);
@@ -332,22 +355,23 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 
 	BTNonLeafNode root;
 	root.read(rootPid, pf);
-	cout<<"ROOT PID INSIDE LOCATE: "<<rootPid;
+	//cout<<"ROOT PID INSIDE LOCATE: "<<rootPid;
 	if(root.getKeyCount() <= 0){
 		return RC_END_OF_TREE;
 	}
 	PageId pid = search(searchKey, root, 1);
-	cout<<"Looking for key in Page: "<<pid<<"\n";
+	//cout<<"Looking for key in Page: "<<pid<<"\n";
 	leaf.read(pid, pf);
 	cursor.pid = pid;
 
 	if(rc = leaf.locate(searchKey, eid) < 0){
+		//cout<<"Setting cursor to PID: "<<cursor.pid;
 		cursor.eid = eid;
 		return rc;
 	}
 
 	cursor.eid = eid;
-	cout<<"Setting cursor to PID: "<<cursor.pid;
+	//cout<<"Setting cursor to PID: "<<cursor.pid;
     return 0;
 }
 
@@ -356,16 +380,17 @@ PageId BTreeIndex::search(int searchKey, BTNonLeafNode current, int current_leve
 { 	PageId pid;
 	BTLeafNode leaf;
 	current.locateChildPtr(searchKey, pid);
-	cout<<"SEARCHING IN CURRENT PAGE: \n";
+	cout<<"\nSEARCHING IN CURRENT PAGE: \n";
 	current.print();
 	//cout <<"LOCATED CHILD PTR AT PAGE :: \n"<<pid; 
 
 	if(current_level ==  treeHeight - 1) {
+		//cout<<"\n ^^^^SEARCH RETURNS PID:: "<<pid;
 		return pid;
   	} else {
   		BTNonLeafNode non_leaf;
   		non_leaf.read(pid, pf);
-  		search(searchKey, non_leaf, current_level+1);
+  		return search(searchKey, non_leaf, current_level+1);
   	}
   	return pid;
 }
@@ -387,7 +412,8 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	if(cursor.pid == -1) {
 		return RC_END_OF_TREE;
 	}
-	rc = leaf.read(cursor.pid, pf);
+	leaf.read(cursor.pid, pf);
+	leaf.print();
 	fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
 	
 	if(rc!=0)
@@ -400,7 +426,7 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 		
 	if(cursor.eid == leaf.getKeyCount()) {
 		//At last key of leaf
-		if(leaf.getNextNodePtr() == -1){
+		if(leaf.getNextNodePtr() == 0){
 			//Next leaf node does not exist,reached end of index tree.
 			cursor.pid = -1;
 			//fprintf(stdout, "Reached End of Tree while reading forward..");

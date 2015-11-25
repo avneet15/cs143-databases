@@ -43,103 +43,117 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   RecordId   rid;
   IndexCursor ic1;
   BTreeIndex tree;
+
+
   
   RC     rc;
   int    key;     
   string value;
   int    count = 0;
   int    diff;
+
+
   
   if ((rc = rf.open(table + ".tbl", 'r')) < 0) {
   fprintf(stderr, "Error: table %s does not exist\n", table.c_str());
   return rc;
   }
-  
-  SelCond sc;
-  bool hasCond = false; //to check if any valid select conditions exist, used for closing tree file too
-  bool hasValCondOrValAttr = false; //to check if any 'value' conditions exist or 
-  
-  bool isCondGE = false; // (is condition greater than or equal to?)
-  bool isCondLE = false; // (is condition greater than or equal to?) 
-  int max = -1;
-  int min = -1;
-  int equalVal = -1;
-  
-  //keep track of the index of a vital select condition
-  int condIndex = -1;
-  
-  //check if any value conditions are conflicting
-  bool valueConflict = false;
-  std::string valEq = "";
-  for(int i=0; i<cond.size(); i++) {
-    sc = cond[i];
-    int tempVal = atoi(sc.value); //store the int-form value of the select condition
-     //First check if Index exists
 
-    //we only have to worry about conditions on keys that don't involve NE
-    //all other select conditions will be considered outside of the B+ Tree
-    if(sc.attr==1 && sc.comp!=SelCond::NE) {
-      hasCond = true; //if we ever hit a valid condition, set this to true
+   SelCond sc;
+    bool useIndex = false; //to check if any valid select conditions exist, used for closing tree file too
+    bool shouldFetch = false; //to check if any 'value' conditions exist or 
+    
+    //bool isCondGE = false; // (is condition greater than or equal to?)
+    //bool isCondLE = false; // (is condition greater than or equal to?) 
+    int max = -1;
+    int min = -1;
+    int equalVal = -1;
+    
+    //keep track of the index of a vital select condition
+    int condIndex = -1;
 
-      switch (cond[i].comp) {
-        case SelCond::EQ:
-          fprintf(stdout, "IN EQUALS\n");
-          equalVal = tempVal;
-          condIndex = i;
-          break;
-        
-        case SelCond::GT:
-          if(tempVal > min || min==-1) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
-          fprintf(stdout, "IN GT\n");
+  if(isIndex){
+      //Open index file
+      if((rc=tree.open(table+".idx",'r')) < 0) {
+        return rc;
+      }  
+     
+   
+    
+    //check if any value conditions are conflicting
+    bool valueConflict = false;
+    std::string valEq = "";
+    for(int i=0; i<cond.size(); i++) {
+      sc = cond[i];
+      int tempVal = atoi(sc.value); //store the int-form value of the select condition
+       //First check if Index exists
 
-          isCondGE = false;
-          min = tempVal + 1;
-          }
-          break;
+      //we only have to worry about conditions on keys that don't involve NE
+      //all other select conditions will be considered outside of the B+ Tree
+      if(sc.attr==1 && sc.comp!=SelCond::NE) {
+        useIndex = true; //if we ever hit a valid condition, set this to true
 
-        case SelCond::LT:
-          if(tempVal < max || max==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
-          {
-          fprintf(stdout, "IN LT\n");
-          isCondLE = true;
-          max = tempVal - 1;
-          }
-          break;
+        switch (cond[i].comp) {
+          case SelCond::EQ:
+            fprintf(stdout, "IN EQUALS\n");
+            equalVal = tempVal;
+            condIndex = i;
+            break;
+          
+          case SelCond::GT:
+            if(tempVal > min || min==-1) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
+            fprintf(stdout, "IN GT\n");
 
-        case SelCond::GE:
-          if(tempVal >= min || min==-1) //if the tempVal min is larger than our current min (or it's uninitialized), set GE
-          {
-            fprintf(stdout, "IN GE\n");
-          isCondGE = true;
-          min = tempVal;
-          }
-          break;
+            //isCondGE = false;
+            min = tempVal + 1;
+            }
+            break;
 
-        case SelCond::LE:
-          if(tempVal <= max || max ==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
-          {
-            fprintf(stdout, "IN LE\n");
-          isCondLE = true;
-          max = tempVal;
-          }
-          break;
+          case SelCond::LT:
+            if(tempVal < max || max==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
+            {
+            fprintf(stdout, "IN LT\n");
+            //isCondLE = true;
+            max = tempVal - 1;
+            }
+            break;
+
+          case SelCond::GE:
+            if(tempVal >= min || min==-1) //if the tempVal min is larger than our current min (or it's uninitialized), set GE
+            {
+              fprintf(stdout, "IN GE\n");
+            //isCondGE = true;
+            min = tempVal;
+            }
+            break;
+
+          case SelCond::LE:
+            if(tempVal <= max || max ==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
+            {
+              fprintf(stdout, "IN LE\n");
+            //isCondLE = true;
+            max = tempVal;
+            }
+            break;
+        }
+      }
+
+      if(attr == 2 || attr == 3 || sc.attr == 2) //if we hit a value condition, update shouldFetch and check for contradictions
+      {
+        fprintf(stdout, "FETCH RECORD REQD\n");
+        shouldFetch = true;
       }
     }
-
-    else if(sc.attr == 2) //if we hit a value condition, update hasValCondOrValAttr and check for contradictions
-    {
-      fprintf(stdout, "IN OUTER ATTR VALUE\n");
-      hasValCondOrValAttr = true;
-    }
-  }
-    fprintf(stdout, "%d %d %d\n",max,min,equalVal);
+      fprintf(stdout, "%d %d %d\n",max,min,equalVal);
+  }    
   
   //if the index file does not exist, use normal select
   //similarly, unless we are interested in a count(*) without conditions, an empty condition array means we use normal select
   //we do this because using "select count(*) from table" could offer a speedup using the index file
-  if(!SqlEngine::isIndex|| (!hasCond))
+  if(!SqlEngine::isIndex|| (!useIndex))
   {
     // scan the table file from the beginning
+    cout<<"\nScanning from table directly..\n";
     rid.pid = rid.sid = 0;
     count = 0;
     while (rid < rf.endRid()) {
@@ -211,12 +225,13 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     //initialize variables (rid doesn't really matter here)
     count = 0;
     rid.pid = rid.sid = 0;
-    hasCond = true; //set this in order to close index properly
+    useIndex = true; //set this in order to close index properly
     fprintf(stdout, " IN INDEX\n");
     //set the starting position for IndexCursor ic1
     if(equalVal != -1) {
       fprintf(stdout, "SEARCHING KEY WITH ==\n");//key must be equalVal
       tree.locate(equalVal, ic1);
+      //cout<<"Finished locating";
      } 
     else if(min != -1) {//Min is defined
       fprintf(stdout, "SEARCHING KEY WITH >\n");
@@ -230,7 +245,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     while(tree.readForward(ic1, key, rid) == 0)
     {
 
-      if(!hasValCondOrValAttr && attr==4) //no need to read the records from disk
+      if(!shouldFetch) //no need to read the records from disk
       {
           if(equalVal!=-1 && key!=equalVal)
             goto rangeExceeded;
@@ -250,71 +265,72 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           
           //if key passes all of the conditions, increment count and jump to next cycle in while loop
           //in doing this if-statement, we save many reads from record file
-          count++;
-          continue;
-      }
+       
+      } else {
     
-      if ((rc = rf.read(rid, key, value)) < 0) {
-        fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
-        goto faultyTuple;
-      }
-
-        for (unsigned i = 0; i < cond.size(); i++)
-        {
-            switch (cond[i].attr)
-            {
-              case 1:
-                diff = key - atoi(cond[i].value);
-                break;
-              case 2:
-                diff = strcmp(value.c_str(), cond[i].value);
-                break;
+            if ((rc = rf.read(rid, key, value)) < 0) {
+              fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+              goto faultyTuple;
+            } else {
+              cout<<"\nReading from table..\n";
             }
 
-            //skip the tuple if any condition is not met
-            //for less than (LT) or less than or equal (LE) conditions on keys, once one of them fails, we are done
-            //since the tree index is sorted, every key afterwards is also going to fail the condition
-            //the same applies with EQ, since once we're past the key that was equal, everything else will fail also
-            switch (cond[i].comp)
-            {
-              case SelCond::EQ:
-                if (diff != 0)
-                {
-                  if(cond[i].attr==1)
-                    goto rangeExceeded;
-                  goto continue_while;
-                }
-                break;
-              case SelCond::NE:
-                if (diff == 0) goto continue_while; //if keys ever match when they're not supposed to, break out of for-loop and wait for next cursor
-                break;
-              case SelCond::GT:
-                if (diff <= 0) goto continue_while; //if !(key > cond value), break out of for-loop and wait for next cursor
-                break;
-              case SelCond::LT:
-                if (diff >= 0)
-                {
-                  if(cond[i].attr==1) //if this ever fails on a key, everything else after will fail anyway, so we end
-                    goto rangeExceeded;
-                  goto continue_while;
-                }
-                break;
-              case SelCond::GE:
-                if (diff < 0) goto continue_while; //if !(key >= cond value), break out of for-loop and wait for next cursor
-                break;
-              case SelCond::LE:
-                if (diff > 0)
-                {
-                  if(cond[i].attr==1) //if this ever fails on a key, everything else after will fail anyway, so we end
-                    goto rangeExceeded;
-                  goto continue_while;
-                }
-                break;
-             }
-        }
+              for (unsigned i = 0; i < cond.size(); i++)
+              {
+                  switch (cond[i].attr)
+                  {
+                    case 1:
+                      diff = key - atoi(cond[i].value);
+                      break;
+                    case 2:
+                      diff = strcmp(value.c_str(), cond[i].value);
+                      break;
+                  }
 
+                      //skip the tuple if any condition is not met
+                  //for less than (LT) or less than or equal (LE) conditions on keys, once one of them fails, we are done
+                  //since the tree index is sorted, every key afterwards is also going to fail the condition
+                  //the same applies with EQ, since once we're past the key that was equal, everything else will fail also
+                  switch (cond[i].comp)
+                  {
+                    case SelCond::EQ:
+                      if (diff != 0)
+                      {
+                        if(cond[i].attr==1)
+                          goto rangeExceeded;
+                        goto continue_while;
+                      }
+                      break;
+                    case SelCond::NE:
+                      if (diff == 0) goto continue_while; //if keys ever match when they're not supposed to, break out of for-loop and wait for next cursor
+                      break;
+                    case SelCond::GT:
+                      if (diff <= 0) goto continue_while; //if !(key > cond value), break out of for-loop and wait for next cursor
+                      break;
+                    case SelCond::LT:
+                      if (diff >= 0)
+                      {
+                        if(cond[i].attr==1) //if this ever fails on a key, everything else after will fail anyway, so we end
+                          goto rangeExceeded;
+                        goto continue_while;
+                      }
+                      break;
+                    case SelCond::GE:
+                      if (diff < 0) goto continue_while; //if !(key >= cond value), break out of for-loop and wait for next cursor
+                      break;
+                    case SelCond::LE:
+                      if (diff > 0)
+                      {
+                        if(cond[i].attr==1) //if this ever fails on a key, everything else after will fail anyway, so we end
+                          goto rangeExceeded;
+                        goto continue_while;
+                      }
+                      break;
+               }
+          }
+
+    }
       count++;
-
       // print the tuple 
       switch (attr)
       {
@@ -346,7 +362,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   // close the table file and return
   faultyTuple:
   
-  if(hasCond) //close the index file if applicable
+  if(useIndex) //close the index file if applicable
   tree.close();
   
   rf.close();
@@ -387,7 +403,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
       parseLoadLine(line, key, value);
       if(rf.append(key, value, rid)!=0)
         return RC_FILE_WRITE_FAILED;
-      cout<<"----------------INSERTING ENTRY NO: "<<z<<"-----------------------\n";
+      cout<<"----------------INSERTING ENTRY NO: "<<z<<"-----------------------------------------\n";
       
       if(tree.insert(key, rid)!=0) {
         return RC_FILE_WRITE_FAILED;  
