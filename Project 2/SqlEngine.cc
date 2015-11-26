@@ -83,6 +83,11 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     //check if any value conditions are conflicting
     bool valueConflict = false;
     std::string valEq = "";
+    //For select count(*) from movie or select key from movie, useIndex should be true
+    if((attr == 4 || attr == 1) && cond.size() == 0){
+      useIndex = true;
+      //shouldFetch = false;
+    }
     for(int i=0; i<cond.size(); i++) {
       sc = cond[i];
       int tempVal = atoi(sc.value); //store the int-form value of the select condition
@@ -139,13 +144,16 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
       }
 
       if(attr == 2 || attr == 3 || sc.attr == 2) //if we hit a value condition, update shouldFetch and check for contradictions
-      {
+      { 
         fprintf(stdout, "FETCH RECORD REQD\n");
         shouldFetch = true;
       }
     }
       fprintf(stdout, "%d %d %d\n",max,min,equalVal);
-  }    
+  }
+  cout<<"\nNumber of conditions = "<<cond.size();
+  cout<<" USE INDEX? "<<useIndex;
+  cout<<" Fetch records? "<<shouldFetch<<"\n"; 
   
   //if the index file does not exist, use normal select
   //similarly, unless we are interested in a count(*) without conditions, an empty condition array means we use normal select
@@ -220,7 +228,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
       ++rid;
     } //while ends
   }
-  else //otherwise, table's index file exists!
+  else //otherwise, USE INDEX...
   {
     //initialize variables (rid doesn't really matter here)
     count = 0;
@@ -235,19 +243,26 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
      } 
     else if(min != -1) {//Min is defined
       fprintf(stdout, "SEARCHING KEY WITH >\n");
-      tree.locate(min, ic1);    
+      rc = tree.locate(min, ic1);
+      cout<<"$$ I...C..."<<ic1.pid<<"..."<<ic1.eid<<"\n";
+
+      if(rc < 0){
+        //Set index cursor to next position which is > current key which is lower than search key
+        //cout<<"$$RECORD UNFOUND..";
+        tree.readForward(ic1, key, rid);
+      }  
      } 
     else{
       fprintf(stdout, "SEARCHING KEY FROM BEGINNING \n");
-      tree.locate(0, ic1);
+      //tree.locate(0, ic1);
+      ic1.pid = 1;
+      ic1.eid = 1;
     } 
     
     while(tree.readForward(ic1, key, rid) == 0)
     {
-
-      if(!shouldFetch) //no need to read the records from disk
-      {
-          if(equalVal!=-1 && key!=equalVal)
+      //cout<<"IN WHILE....";
+       if(equalVal!=-1 && key!=equalVal)
             goto rangeExceeded;
           
           if(max!=-1) //if there is a condition on LT or LE that fails, we are done
@@ -259,9 +274,12 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           
           if(min!=-1) //if there is a condition on GT or GE that fails, we are done
           {
-            if(key<min)
+            if(key < min)
               goto rangeExceeded;
           }
+
+      if(!shouldFetch) //no need to read the records from disk
+      {   //Continue with while condition       
           
           //if key passes all of the conditions, increment count and jump to next cycle in while loop
           //in doing this if-statement, we save many reads from record file
@@ -363,7 +381,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   faultyTuple:
   
   if(useIndex) //close the index file if applicable
-  tree.close();
+    tree.close();
   
   rf.close();
   return rc;

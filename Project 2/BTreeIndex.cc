@@ -364,8 +364,9 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 	leaf.read(pid, pf);
 	cursor.pid = pid;
 
-	if(rc = leaf.locate(searchKey, eid) < 0){
+	if((rc = leaf.locate(searchKey, eid)) < 0){
 		//cout<<"Setting cursor to PID: "<<cursor.pid;
+		//cout<<"AAAAAAA..."<<rc;
 		cursor.eid = eid;
 		return rc;
 	}
@@ -380,8 +381,8 @@ PageId BTreeIndex::search(int searchKey, BTNonLeafNode current, int current_leve
 { 	PageId pid;
 	BTLeafNode leaf;
 	current.locateChildPtr(searchKey, pid);
-	cout<<"\nSEARCHING IN CURRENT PAGE: \n";
-	current.print();
+	//cout<<"\nSEARCHING IN CURRENT PAGE: \n";
+	//current.print();
 	//cout <<"LOCATED CHILD PTR AT PAGE :: \n"<<pid; 
 
 	if(current_level ==  treeHeight - 1) {
@@ -416,8 +417,8 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	leaf.print();
 	fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
 	
-	if(rc!=0)
-		return rc;
+	//if(rc!=0)
+	//	return rc;
 	
 	rc = leaf.readEntry(cursor.eid, key, rid);
 	
@@ -425,6 +426,7 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	//	return rc;
 		
 	if(cursor.eid == leaf.getKeyCount()) {
+		//cout<<"#####NEXT NODe PTR :: "<<leaf.getNextNodePtr()<<endl;
 		//At last key of leaf
 		if(leaf.getNextNodePtr() == 0){
 			//Next leaf node does not exist,reached end of index tree.
@@ -435,12 +437,12 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 			//Sibling node exists
 			cursor.eid = 1;
 			cursor.pid = leaf.getNextNodePtr();
-			fprintf(stdout, "Read forward from sibling on page: %d", leaf.getNextNodePtr());
+			//fprintf(stdout, "Read forward from sibling on page: %d", leaf.getNextNodePtr());
 
 		}	
 	}
 	else{
-		fprintf(stdout, "%s: %d\n","Reading forward from ",cursor.eid);
+		//fprintf(stdout, "%s: %d\n","Reading forward from ",cursor.eid);
 		cursor.eid++;
 	}	
 	return 0;

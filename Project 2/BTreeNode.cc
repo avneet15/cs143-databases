@@ -209,6 +209,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 			eid = curr_eid;
 			break;
 		}
+		eid = curr_eid;
 	}
 	return RC_NO_SUCH_RECORD;
 }
@@ -242,19 +243,14 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
  */
 PageId BTLeafNode::getNextNodePtr()
 { 	char *p = buffer;
-	
 
   	//PageId pid =*(p+(getKeyCount()*entry_size)+key_size);
   	//Return pid as -1 if sibling doesnt exist.
-  	int no_of_records = getKeyCount();
-  	PageId pid = -1;
-  	p = p+(no_of_records * LEAF_ENTRY_SIZE);
-  	if(p[0]){
-  		memcpy(&pid, p+(no_of_records * LEAF_ENTRY_SIZE), PAGE_ID_SIZE);
-  	}
-  	//fprintf(stdout, "NEXT NODE PTR: %d\n",pid);
-  	return pid;
-}
+  	PageId nextPtr = -1;
+	memcpy(&nextPtr, p+(getKeyCount()*LEAF_ENTRY_SIZE),PAGE_ID_SIZE);
+	return nextPtr;
+ }
+
 /*
  * Set the pid of the next slibling node.
  * @param pid[IN] the PageId of the next sibling node 
@@ -467,19 +463,19 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 
 	for(curr_eid=1;curr_eid<=no_of_records;curr_eid+=1) {
 		if(rc=readEntryNonLeaf(curr_eid,curr_key,curr_pid)<0) {
-			cout<<"INSIDE LOCATE HILD PTR: CURR_KEY = "<<curr_key<<" CURR PID: "<<curr_pid;
+			//cout<<"INSIDE LOCATE HILD PTR: CURR_KEY = "<<curr_key<<" CURR PID: "<<curr_pid;
 			return rc;
 		}
 		if(searchKey < curr_key) {
 			memcpy(&pid,p+(curr_eid-1)* NON_LEAF_ENTRY_SIZE, PAGE_ID_SIZE);
-			cout<<"PID FOUND INSIDE LOCATE CHILD:: "<<pid;
+			//cout<<"PID FOUND INSIDE LOCATE CHILD:: "<<pid;
 			return 0;
 		}
 		
 	}
 	//Search Key is greater greater all keys in Non Leaf Node
 	memcpy(&pid,p+(curr_eid-1)* NON_LEAF_ENTRY_SIZE, PAGE_ID_SIZE);
-	cout<<"INSIDE LOCATE CHILD PTR: RETURNED PID IS: "<<pid;
+	//cout<<"INSIDE LOCATE CHILD PTR: RETURNED PID IS: "<<pid;
 	return 0;
 }
 
