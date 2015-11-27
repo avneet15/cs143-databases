@@ -103,7 +103,7 @@ RC BTreeIndex::close()
 	memcpy(page, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
 	memcpy(page+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
 	pf.write(0, page);
-	if(rc = pf.close() < 0){
+	if((rc = pf.close()) < 0){
 		return rc;
 	}
     return 0;
@@ -146,7 +146,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 			fprintf(stdout, "INSERTING IN TREE_HEIGHT = 1\n");
 			leaf.read(rootPid, pf);
 			//fprintf(stdout, "TRYING TO INSERT IN LEAF AT PAGE ID:%d \n", rootPid);
-			if(rc = leaf.insert(key, rid) < 0) {
+			if((rc = leaf.insert(key, rid)) < 0) {
 				BTLeafNode sibling;
 				int siblingKey;
 				PageId siblingPid = pf.endPid();
@@ -201,7 +201,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				int insertHt = -1;
 				leaf.read(c.pid, pf);
 				fprintf(stdout, "ENTRY TO BE INSERTED IN PAGE:: %d\n", c.pid);
-				if(rc = leaf.insert(key, rid) < 0) {
+				if((rc = leaf.insert(key, rid)) < 0) {
 					cout<<"ENTERING RECURSIVE INSERT...\n";
 					recursiveInsert(key, rid, rootPid, 1, insertHt, siblingKey, lowerPid);
 					fprintf(stdout, "FINISHED RECURSIVE INSERT\n");
