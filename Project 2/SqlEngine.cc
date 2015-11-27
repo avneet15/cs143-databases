@@ -61,8 +61,10 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   }
 
   if((rc=tree.open(table+".idx",'r')) < 0) {
+      cout<<"isIndex:"<<isIndex<<endl;
       isIndex = false;
   } else {
+    cout<<"isIndex:"<<isIndex<<endl;
     isIndex = true;
   }
 
@@ -417,9 +419,9 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
  
   if(index)
   {
-  //isIndex = true;
-  //fprintf(stdout, "WRITING IN INDEX \n");
+
   tree.open(table + ".idx", 'w');
+
   int z=1;
     while(getline(tableData, line))
     {
@@ -434,7 +436,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
         z++;
       }
     }
-    //tree.print();
+
   tree.close();
   }
   else
