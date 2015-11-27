@@ -87,10 +87,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	BTNonLeafNode root;
 	IndexCursor c;
 	BTLeafNode leaf;
-	BTNonLeafNode nf;
-	cout<<"!!!!!!!!!!!! PAGE 3 !!!!!!!!!\n";
-	nf.read(3, pf);
-	nf.print();
 	rc = locate(key, c);
 	//fprintf(stdout, " LOCATED ENTRY AT %d %d \n", c.pid, c.eid);
 	if(rc == RC_END_OF_TREE) {
@@ -415,7 +411,7 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	}
 	leaf.read(cursor.pid, pf);
 	leaf.print();
-	fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
+	//fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
 	
 	//if(rc!=0)
 	//	return rc;

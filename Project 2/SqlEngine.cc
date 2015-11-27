@@ -59,6 +59,12 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   return rc;
   }
 
+  if((rc=tree.open(table+".idx",'r')) < 0) {
+      isIndex = false;
+  } else {
+    isIndex = true;
+  }
+
    SelCond sc;
     bool useIndex = false; //to check if any valid select conditions exist, used for closing tree file too
     bool shouldFetch = false; //to check if any 'value' conditions exist or 
@@ -74,12 +80,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
   if(isIndex){
       //Open index file
-      if((rc=tree.open(table+".idx",'r')) < 0) {
-        return rc;
-      }  
-     
-   
-    
+         
     //check if any value conditions are conflicting
     bool valueConflict = false;
     std::string valEq = "";
@@ -380,7 +381,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   // close the table file and return
   faultyTuple:
   
-  if(useIndex) //close the index file if applicable
+  if(isIndex) //close the index file if applicable
     tree.close();
   
   rf.close();

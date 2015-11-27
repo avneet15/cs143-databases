@@ -17,6 +17,7 @@ void BTLeafNode::print()
 	int key;
 	RecordId rid;
 	char * p = buffer;
+/*
 	for(int i=1; i<=getKeyCount(); i++)
 	{
 	readEntry(i, key, rid);
@@ -28,6 +29,8 @@ void BTLeafNode::print()
 	PageId nextPtr;
 	memcpy(&nextPtr, p+(getKeyCount()*LEAF_ENTRY_SIZE),PAGE_ID_SIZE);
 	cout<<" -> "<<nextPtr<<endl;
+*/	
+	
 	
 }
 
@@ -66,14 +69,25 @@ int BTLeafNode::getKeyCount()
 	char *p = buffer;
 	//cout << "Buffer while fetching Key Count is "<<buffer<<"\n";
 	int i;
-  	int records = 0;
+  	int no_of_records = 0;
+  	int temp_key;
   	//fprintf(stdout, "Entry size is: %d\n",LEAF_ENTRY_SIZE);
-  	for(i = RECORD_ID_SIZE;p[i];i+=LEAF_ENTRY_SIZE) {
+  	/*for(i = RECORD_ID_SIZE;p[i];i+=LEAF_ENTRY_SIZE) {
   	//	cout <<"Val is"<< p[i];
   		records = records+1;
   	}
-  	//cout <<"Current Key Count="<<records<<"\n";
-  	return records;
+  	//cout <<"Current Key Count="<<records<<"\n";*/
+  	p = p+RECORD_ID_SIZE;
+  	while(true) {
+  		memcpy(&temp_key, p, KEY_SIZE);
+  		if(temp_key == 0){
+  			break;
+  		}
+  		no_of_records+=1;
+  		p = p+LEAF_ENTRY_SIZE;
+
+  	}
+  	return no_of_records;
 }
 
 /*
@@ -206,7 +220,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 			return 0;
 		}	
 		if(curr_key>searchKey) {
-			eid = curr_eid;
+			//eid = curr_eid;
 			break;
 		}
 		eid = curr_eid;
@@ -284,7 +298,7 @@ std::fill(buffer, buffer + PageFile::PAGE_SIZE, 0); //init buffer
 void BTNonLeafNode::print()
 {int key;
 	PageId pid;
-	
+	/*
 	for(int i=1; i<= getKeyCount(); i++)
 	{
 	readEntryNonLeaf(i, key, pid);
@@ -293,6 +307,7 @@ void BTNonLeafNode::print()
 	cout << " PID "<<pid<<endl;	
 		
 	}
+	*/
 	
 }
 RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
@@ -337,12 +352,26 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
 int BTNonLeafNode::getKeyCount()
 {   char *p = buffer;
 	int i;
-  	int records = 0;
+  	int no_of_records = 0;
+  	int temp_key = 0;
   	
-  	for(i = PAGE_ID_SIZE;p[i];i+=NON_LEAF_ENTRY_SIZE) {
+  	/*for(i = PAGE_ID_SIZE;p[i];i+=NON_LEAF_ENTRY_SIZE) {
   		records = records+1;
   	}
   	return records; 
+  	*/
+
+  	p = p+ PAGE_ID_SIZE;
+  	while(true) {
+  		memcpy(&temp_key, p, KEY_SIZE);
+  		if(temp_key == 0){
+  			break;
+  		}
+  		no_of_records+=1;
+  		p = p+NON_LEAF_ENTRY_SIZE;
+
+  	}
+  	return no_of_records;
 }
 
 
