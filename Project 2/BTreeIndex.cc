@@ -37,35 +37,57 @@ RC BTreeIndex::open(const string& indexname, char mode)
 {	RC rc;
 	char buffer[PageFile::PAGE_SIZE];
 
-  if((rc = pf.open(indexname + ".idx", 'r'))< 0){
-    cout<<"INDEX FILE Does not EXIST"<<endl;
-    pf.open(indexname + ".idx", 'w');
-
-    char *p = buffer;
-    rootPid = -1;
-    treeHeight = 0;	
-    memcpy(p, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
-    memcpy(p+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
-    pf.write(0, p);
-
-    return 0;
-  }
-  else {
-	    cout<<"INDEX FILE EXISTs"<<endl;
-	    
-	    if((rc = pf.open(indexname,mode))< 0){
+	switch(mode) {
+		case 'r':
+		if((rc = pf.open(indexname + ".idx", 'r'))< 0){
 			return rc;
 		}
-		//Fetching the first page of the index file to read in the Root Pid and the Tree Height.
-		pf.read(0,buffer);
-		char *p = buffer;
-		
-		memcpy(&rootPid,p,BTLeafNode::PAGE_ID_SIZE);
-		memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE, sizeof(int));
-		
-		fprintf(stdout, "OPENED INDEX FILE \n");
+		else {
 
-  }
+			pf.read(0,buffer);
+			char *p = buffer;
+			
+			memcpy(&rootPid,p,BTLeafNode::PAGE_ID_SIZE);
+			memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE, sizeof(int));
+		}
+
+
+		break;
+
+		case 'w':
+
+		if((rc = pf.open(indexname + ".idx", 'r'))< 0){
+		    cout<<"INDEX FILE Does not EXIST"<<endl;
+		    pf.open(indexname + ".idx", 'w');
+
+		    char *p = buffer;
+		    rootPid = -1;
+		    treeHeight = 0;	
+		    memcpy(p, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
+		    memcpy(p+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
+		    pf.write(0, p);
+
+		    return 0;
+  		}
+	  else {
+		    cout<<"INDEX FILE EXISTs"<<endl;
+		    
+		    if((rc = pf.open(indexname,mode))< 0){
+				return rc;
+			}
+			//Fetching the first page of the index file to read in the Root Pid and the Tree Height.
+			pf.read(0,buffer);
+			char *p = buffer;
+			
+			memcpy(&rootPid,p,BTLeafNode::PAGE_ID_SIZE);
+			memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE, sizeof(int));
+			
+			fprintf(stdout, "OPENED INDEX FILE \n");
+
+	  	}
+  		break;
+	}
+
 
     return 0;
 }

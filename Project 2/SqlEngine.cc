@@ -109,7 +109,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             break;
           
           case SelCond::GT:
-            if(tempVal > min || min==-1) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
+            if(tempVal > min || !minBool) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
             fprintf(stdout, "IN GT\n");
 
             //isCondGE = false;
@@ -119,7 +119,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             break;
 
           case SelCond::LT:
-            if(tempVal < max || max==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
+            if(tempVal < max || !maxBool) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
             {
             fprintf(stdout, "IN LT\n");
             //isCondLE = true;
@@ -129,7 +129,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             break;
 
           case SelCond::GE:
-            if(tempVal >= min || min==-1) //if the tempVal min is larger than our current min (or it's uninitialized), set GE
+            if(tempVal >= min || !minBool) //if the tempVal min is larger than our current min (or it's uninitialized), set GE
             {
               fprintf(stdout, "IN GE\n");
             //isCondGE = true;
@@ -139,7 +139,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             break;
 
           case SelCond::LE:
-            if(tempVal <= max || max ==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
+            if(tempVal <= max || !maxBool) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
             {
               fprintf(stdout, "IN LE\n");
             //isCondLE = true;
@@ -243,12 +243,12 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     useIndex = true; //set this in order to close index properly
     fprintf(stdout, " IN INDEX\n");
     //set the starting position for IndexCursor ic1
-    if(equalVal != -1) {
+    if(equalValBool) {
       fprintf(stdout, "SEARCHING KEY WITH ==\n");//key must be equalVal
       tree.locate(equalVal, ic1);
       //cout<<"Finished locating";
      } 
-    else if(min != -1) {//Min is defined
+    else if(minBool) {//Min is defined
       fprintf(stdout, "SEARCHING KEY WITH >\n");
       rc = tree.locate(min, ic1);
       cout<<"$$ I...C..."<<ic1.pid<<"..."<<ic1.eid<<"\n";
@@ -262,6 +262,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     else{
       fprintf(stdout, "SEARCHING KEY FROM BEGINNING \n");
       //tree.locate(0, ic1);
+      //since we know first record is at pid=1 and eid=1, so it's hard coded here:
       ic1.pid = 1;
       ic1.eid = 1;
     } 
@@ -269,17 +270,17 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     while(tree.readForward(ic1, key, rid) == 0)
     {
       //cout<<"IN WHILE....";
-       if(equalVal!=-1 && key!=equalVal)
+       if(equalValBool && key!=equalVal)
             goto rangeExceeded;
           
-          if(max!=-1) //if there is a condition on LT or LE that fails, we are done
+          if(maxBool) //if there is a condition on LT or LE that fails, we are done
           {
             if(key>max)
               goto rangeExceeded;
             
           }
           
-          if(min!=-1) //if there is a condition on GT or GE that fails, we are done
+          if(minBool) //if there is a condition on GT or GE that fails, we are done
           {
             if(key < min)
               goto rangeExceeded;
