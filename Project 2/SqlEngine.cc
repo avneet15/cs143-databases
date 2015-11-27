@@ -62,10 +62,10 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
   if((rc=tree.open(table+".idx",'r')) < 0) {
       isIndex = false;
-      cout<<"isIndex: false"<<isIndex<<endl;
+      //cout<<"isIndex: false"<<isIndex<<endl;
   } else {
     isIndex = true;
-    cout<<"isIndex: true"<<isIndex<<endl;
+    //cout<<"isIndex: true"<<isIndex<<endl;
   }
 
    SelCond sc;
@@ -81,9 +81,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     bool equalValBool = false;
     
   if(isIndex){
-    cout<<"IM here"<<endl;
-      //Open index file
-         
     //check if any value conditions are conflicting
     bool valueConflict = false;
     std::string valEq = "";
@@ -104,14 +101,14 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
         switch (cond[i].comp) {
           case SelCond::EQ:
-            fprintf(stdout, "IN EQUALS\n");
+            //fprintf(stdout, "IN EQUALS\n");
             equalVal = tempVal;
             equalValBool = true;
             break;
           
           case SelCond::GT:
             if(tempVal > min || !minBool) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
-            fprintf(stdout, "IN GT\n");
+            //fprintf(stdout, "IN GT\n");
 
             //isCondGE = false;
             min = tempVal + 1;
@@ -122,7 +119,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           case SelCond::LT:
             if(tempVal < max || !maxBool) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
             {
-            fprintf(stdout, "IN LT\n");
+            //fprintf(stdout, "IN LT\n");
             //isCondLE = true;
             max = tempVal - 1;
             maxBool = true;
@@ -132,7 +129,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           case SelCond::GE:
             if(tempVal >= min || !minBool) //if the tempVal min is larger than our current min (or it's uninitialized), set GE
             {
-              fprintf(stdout, "IN GE\n");
+            //fprintf(stdout, "IN GE\n");
             //isCondGE = true;
             min = tempVal;
             minBool = true;
@@ -142,7 +139,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           case SelCond::LE:
             if(tempVal <= max || !maxBool) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
             {
-              fprintf(stdout, "IN LE\n");
+            //fprintf(stdout, "IN LE\n");
             //isCondLE = true;
             max = tempVal;
             maxBool = true;
@@ -153,15 +150,15 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
       if(attr == 2 || attr == 3 || sc.attr == 2) //if we hit a value condition, update shouldFetch and check for contradictions
       { 
-        fprintf(stdout, "FETCH RECORD REQD\n");
+        //fprintf(stdout, "FETCH RECORD REQD\n");
         shouldFetch = true;
       }
     }
-      fprintf(stdout, "%d %d %d\n",max,min,equalVal);
+      //fprintf(stdout, "%d %d %d\n",max,min,equalVal);
   }
-  cout<<"\nNumber of conditions = "<<cond.size();
+  /*cout<<"\nNumber of conditions = "<<cond.size();
   cout<<" USE INDEX? "<<useIndex;
-  cout<<" Fetch records? "<<shouldFetch<<"\n"; 
+  cout<<" Fetch records? "<<shouldFetch<<"\n"; */
   
   //if the index file does not exist, use normal select
   //similarly, unless we are interested in a count(*) without conditions, an empty condition array means we use normal select
@@ -169,7 +166,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   if(!SqlEngine::isIndex|| (!useIndex))
   {
     // scan the table file from the beginning
-    cout<<"\nScanning from table directly..\n";
+    //cout<<"\nScanning from table directly..\n";
     rid.pid = rid.sid = 0;
     count = 0;
     while (rid < rf.endRid()) {
@@ -242,21 +239,21 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     count = 0;
     rid.pid = rid.sid = 0;
     useIndex = true; //set this in order to close index properly
-    fprintf(stdout, " IN INDEX\n");
+    //fprintf(stdout, " IN INDEX\n");
     //set the starting position for IndexCursor ic1
     if(equalValBool) {
-      fprintf(stdout, "SEARCHING KEY WITH ==\n");//key must be equalVal
+      //fprintf(stdout, "SEARCHING KEY WITH ==\n");//key must be equalVal
       tree.locate(equalVal, ic1);
       //cout<<"Finished locating";
      } 
     else if(minBool) {//Min is defined
-      fprintf(stdout, "SEARCHING KEY WITH >\n");
+      //fprintf(stdout, "SEARCHING KEY WITH >\n");
       rc = tree.locate(min, ic1);
-      cout<<"$$ I...C..."<<ic1.pid<<"..."<<ic1.eid<<"\n";
+      //cout<<"$$ I...C..."<<ic1.pid<<"..."<<ic1.eid<<"\n";
 
       if(rc < 0){
         //Set index cursor to next position which is > current key which is lower than search key
-        cout<<" ONE MORE READ FWD......";
+        //cout<<" ONE MORE READ FWD......";
         tree.readForward(ic1, key, rid);
       }  
      } 
@@ -299,7 +296,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
               fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
               goto faultyTuple;
             } else {
-              cout<<"\nReading from table..\n";
+              //cout<<"\nReading from table..\n";
             }
 
               for (unsigned i = 0; i < cond.size(); i++)
@@ -429,7 +426,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
       parseLoadLine(line, key, value);
       if(rf.append(key, value, rid)!=0)
         return RC_FILE_WRITE_FAILED;
-      cout<<"----------------INSERTING ENTRY NO: "<<z<<"-----------------------------------------\n";
+      //cout<<"----------------INSERTING ENTRY NO: "<<z<<"-----------------------------------------\n";
       
       if(tree.insert(key, rid)!=0) {
         return RC_FILE_WRITE_FAILED;  

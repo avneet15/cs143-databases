@@ -35,7 +35,7 @@ BTreeIndex::BTreeIndex()
  */
 RC BTreeIndex::open(const string& indexname, char mode)
 {	RC rc;
-	cout<<"Opening:"<<indexname<<endl;
+	//cout<<"Opening:"<<indexname<<endl;
 	char buffer[PageFile::PAGE_SIZE];
 
 	switch(mode) {
@@ -58,7 +58,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 		case 'w':
 
 		if((rc = pf.open(indexname, 'r'))< 0){
-		    cout<<"INDEX FILE Does not EXIST"<<endl;
+		    //cout<<"INDEX FILE Does not EXIST"<<endl;
 		    pf.open(indexname, 'w');
 
 		    char *p = buffer;
@@ -71,7 +71,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 		    return 0;
   		}
 	  else {
-		    cout<<"INDEX FILE EXISTs"<<endl;
+		    //cout<<"INDEX FILE EXISTs"<<endl;
 		    
 		    if((rc = pf.open(indexname,mode))< 0){
 				return rc;
@@ -83,7 +83,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 			memcpy(&rootPid,p,BTLeafNode::PAGE_ID_SIZE);
 			memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE, sizeof(int));
 			
-			fprintf(stdout, "OPENED INDEX FILE \n");
+			//fprintf(stdout, "OPENED INDEX FILE \n");
 
 	  	}
   		break;
@@ -123,15 +123,15 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	rc = locate(key, c);
 	//fprintf(stdout, " LOCATED ENTRY AT %d %d \n", c.pid, c.eid);
 	if(rc == RC_END_OF_TREE) {
-		fprintf(stdout, "REACHED END OF TREE\n");
+		//fprintf(stdout, "REACHED END OF TREE\n");
 		//First Key being inserted ever
 		//Create a new leaf node and insert value.Set this Node's pid as the rootPid
-		fprintf(stdout, "Creating new root : RC code=>%d\n", rc);
+		//fprintf(stdout, "Creating new root : RC code=>%d\n", rc);
 		PageId root_pid = pf.endPid();
 		leaf.read(root_pid, pf);
 		//fprintf(stdout, "NEW ROOT PID IS : %d\n", root_pid);
 		leaf.insert(key, rid);
-		fprintf(stdout, "INSERTED IN 1st Leaf/root  : %d\n", root_pid);
+		//fprintf(stdout, "INSERTED IN 1st Leaf/root  : %d\n", root_pid);
 
 		leaf.write(root_pid, pf);
 		leaf.print();
@@ -143,14 +143,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		//If only leaf root exists yet
 		if(treeHeight == 1) {
 			//fprintf(stdout, "AD : %d\n", pid);
-			fprintf(stdout, "INSERTING IN TREE_HEIGHT = 1\n");
+			//fprintf(stdout, "INSERTING IN TREE_HEIGHT = 1\n");
 			leaf.read(rootPid, pf);
 			//fprintf(stdout, "TRYING TO INSERT IN LEAF AT PAGE ID:%d \n", rootPid);
 			if((rc = leaf.insert(key, rid)) < 0) {
 				BTLeafNode sibling;
 				int siblingKey;
 				PageId siblingPid = pf.endPid();
-				fprintf(stdout, "Newly created Sibling Pid is : %d\n", siblingPid);
+				//fprintf(stdout, "Newly created Sibling Pid is : %d\n", siblingPid);
 				sibling.read(siblingPid, pf);
 
 				leaf.insertAndSplit(key, rid, sibling, siblingKey);
@@ -158,34 +158,34 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				//sibling.setNextNodePtr(leaf.getNextNodePtr());
 				leaf.setNextNodePtr(siblingPid);
 
-				cout<<"***PRINTING CURRENT: \n";
+				//cout<<"***PRINTING CURRENT: \n";
 				leaf.print();
 
 				leaf.write(rootPid, pf);
 
-				cout<<"***PRINTING SIBLING: \n";
+				//cout<<"***PRINTING SIBLING: \n";
 				sibling.print();
 
 				//fprintf(stdout, "Existing Root Pid : %d\n", rootPid);
 				
 				sibling.write(siblingPid, pf);
-				fprintf(stdout, "NEWLY CREATED SIBLING PID : %d\n", siblingPid);
+				//fprintf(stdout, "NEWLY CREATED SIBLING PID : %d\n", siblingPid);
 				PageId new_root_pid = pf.endPid();
 				root.read(new_root_pid, pf);
 				root.initializeRoot(rootPid, siblingKey, siblingPid);
-				cout<<"Newly created ROOT PID: WITH LEFT PTR = "<<rootPid<<" RIGHT PTR = "<<siblingPid<<"\n";
+				//cout<<"Newly created ROOT PID: WITH LEFT PTR = "<<rootPid<<" RIGHT PTR = "<<siblingPid<<"\n";
 
 				//fprintf(stdout, "CC : %d\n", siblingPid);
 				root.write(new_root_pid, pf);
-				cout<<"ROOT IS::\n";
+				//cout<<"ROOT IS::\n";
 				root.print();
 				rootPid = new_root_pid;
 				treeHeight = treeHeight + 1;
-				fprintf(stdout, "New tree height : %d\n", treeHeight);
+				//fprintf(stdout, "New tree height : %d\n", treeHeight);
 				return 0;
 			} else {
 				leaf.write(rootPid, pf);
-				fprintf(stdout, "Inserting in Leaf Root with rootPid at : %d\n", rootPid);
+				//fprintf(stdout, "Inserting in Leaf Root with rootPid at : %d\n", rootPid);
 				leaf.print();
 				return 0;
 			}
@@ -200,14 +200,14 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				PageId lowerPid;
 				int insertHt = -1;
 				leaf.read(c.pid, pf);
-				fprintf(stdout, "ENTRY TO BE INSERTED IN PAGE:: %d\n", c.pid);
+				//fprintf(stdout, "ENTRY TO BE INSERTED IN PAGE:: %d\n", c.pid);
 				if((rc = leaf.insert(key, rid)) < 0) {
-					cout<<"ENTERING RECURSIVE INSERT...\n";
+					//cout<<"ENTERING RECURSIVE INSERT...\n";
 					recursiveInsert(key, rid, rootPid, 1, insertHt, siblingKey, lowerPid);
-					fprintf(stdout, "FINISHED RECURSIVE INSERT\n");
+					//fprintf(stdout, "FINISHED RECURSIVE INSERT\n");
 				} else {
 					// Else insert was successful in leaf
-					cout<<"Normal insertion of leaf in PID: "<<c.pid<<"\n";
+					//cout<<"Normal insertion of leaf in PID: "<<c.pid<<"\n";
 					leaf.write(c.pid, pf);
 					//fprintf(stdout, "HH : %d\n", pid);
 					return 0;
@@ -228,18 +228,18 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 	*/
 		//fprintf(stdout, "A\n");
 		if(currHeight < treeHeight) {
-			fprintf(stdout, "TRAVERSING DOWN FROM PID %d..\n",curr_pid);
+			//fprintf(stdout, "TRAVERSING DOWN FROM PID %d..\n",curr_pid);
 			root.read(curr_pid, pf);
 			root.locateChildPtr(key, pid);
-			fprintf(stdout, "NEED TO TRAVERSE PID: %d\n",pid);
+			//fprintf(stdout, "NEED TO TRAVERSE PID: %d\n",pid);
 			recursiveInsert(key, rid, pid, currHeight + 1, insertHeight, siblingKey, siblingPid);
 			//Now insert it in parent which is at insertHeight
 			if(currHeight == insertHeight){
 				//Insert in parent node
-				cout<<"INSERTING AT UPPER LEVEL HAVING PID = "<<curr_pid<<" INSERT KEY = "<<siblingKey<<"INSERT PID  = "<<siblingPid<<"\n";
+				//cout<<"INSERTING AT UPPER LEVEL HAVING PID = "<<curr_pid<<" INSERT KEY = "<<siblingKey<<"INSERT PID  = "<<siblingPid<<"\n";
 				if(root.insert(siblingKey, siblingPid) < 0) {
 					//Insert and split current node
-					cout<<"INSERTING AND SPLITTING AT LEVEL"<<currHeight<<"\n";
+					//cout<<"INSERTING AND SPLITTING AT LEVEL"<<currHeight<<"\n";
 					BTNonLeafNode new_sibling;
 					//int siblingKey;
 					//PageId 
@@ -249,9 +249,9 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 					new_sibling.read(new_sibling_Pid, pf);
 					root.insertAndSplit(siblingKey, siblingPid, new_sibling, siblingKey);
 
-					cout<<"**CURRENT NODE::"<<"\n";
+					//cout<<"**CURRENT NODE::"<<"\n";
 					root.print();
-					cout<<"**SIBLING NODE::"<<"\n";
+					//cout<<"**SIBLING NODE::"<<"\n";
 					new_sibling.print();
 
 					//Writing current and sibling node
@@ -263,28 +263,28 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 					siblingPid = new_sibling_Pid;
 					insertHeight = currHeight - 1;
 
-					fprintf(stdout, "NEW SIBLING PID : %d AND SIBLING KEY = %d \n", siblingPid, siblingKey);
+					//fprintf(stdout, "NEW SIBLING PID : %d AND SIBLING KEY = %d \n", siblingPid, siblingKey);
 					//Checking if this was the root level, as new root would have to be created
 					if(currHeight == 1){
-						fprintf(stdout, "CREATING NEW ROOT AND INCREMENTING HEIGHT : \n");
+						//fprintf(stdout, "CREATING NEW ROOT AND INCREMENTING HEIGHT : \n");
 						BTNonLeafNode new_root;
 						PageId new_root_pid = pf.endPid();
 						new_root.initializeRoot(curr_pid, siblingKey, new_sibling_Pid);
-						cout<<"LEFT PAGE:: "<<curr_pid<<" RIGHT PAGE:: "<<new_sibling_Pid<<"\n";
+						//cout<<"LEFT PAGE:: "<<curr_pid<<" RIGHT PAGE:: "<<new_sibling_Pid<<"\n";
 						new_root.write(new_root_pid, pf);
 						rootPid = new_root_pid;
 						treeHeight = treeHeight + 1;
-						cout<<"TREE HEIGHT IS NOW "<<treeHeight<<"\n";
-						cout<<"INSERTION IS COMPLETED AND NEW ROOT CREATED AT PID: "<<rootPid<<"\n";
-						cout<<"NEW ROOT IS::\n";
+						//cout<<"TREE HEIGHT IS NOW "<<treeHeight<<"\n";
+						//cout<<"INSERTION IS COMPLETED AND NEW ROOT CREATED AT PID: "<<rootPid<<"\n";
+						//cout<<"NEW ROOT IS::\n";
 						new_root.print();
-						cout<<"\n";
+						//cout<<"\n";
 						return 0;
 					}
-					cout<<"CURRENT LEAF::\n";
+					//cout<<"CURRENT LEAF::\n";
 					root.print();
 				} else {
-					cout<<"INSERTION IS COMPLETED FOR LEVEL "<<currHeight<<"\n";
+					//cout<<"INSERTION IS COMPLETED FOR LEVEL "<<currHeight<<"\n";
 					root.write(curr_pid, pf);
 					return 0;
 				}
@@ -294,7 +294,7 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 				return 0;
 			}
 		} else {
-			cout<<"REACHED LEAF FOR INSERTION AT PID::"<<curr_pid<<"\n";
+			//cout<<"REACHED LEAF FOR INSERTION AT PID::"<<curr_pid<<"\n";
 			BTLeafNode leaf;
 			leaf.read(curr_pid, pf);
 
@@ -307,7 +307,7 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 			//Insert and Split using Sibling
 			//Retrieve leaf's next Node Pointer
 			PageId next_node_ptr = leaf.getNextNodePtr();
-			cout<<"LEAFS's NEXT NODE PTR = "<<next_node_ptr;
+			//cout<<"LEAFS's NEXT NODE PTR = "<<next_node_ptr;
 			sibling.read(siblingPid, pf);
 			leaf.insertAndSplit(key, rid, sibling, siblingKey);
 
@@ -315,10 +315,10 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 			//sibling.setNextNodePtr(next_node_ptr);
 			leaf.setNextNodePtr(siblingPid);
 			
-			fprintf(stdout, "NEW SIBLING PID : %d AND SIBLING KEY = %d \n", siblingPid, siblingKey);
+			//fprintf(stdout, "NEW SIBLING PID : %d AND SIBLING KEY = %d \n", siblingPid, siblingKey);
 
 			//Printing current and sibling
-			cout<<"\n Current leaf node::\n";
+			//cout<<"\n Current leaf node::\n";
 			leaf.print();
 			cout<<"\n Current sibling node::\n";
 			sibling.print();
@@ -366,18 +366,18 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 	}
 	if(treeHeight == 1){
 		//Only the leaf root exists
-		fprintf(stdout, "LOCATING IN TREE WITH HT=1 and ROOT AT PAGE: %d\n",rootPid);
+		//fprintf(stdout, "LOCATING IN TREE WITH HT=1 and ROOT AT PAGE: %d\n",rootPid);
 		leaf.read(rootPid, pf);
 		leaf.print();
 		if((rc = leaf.locate(searchKey, eid)) < 0){
 			cursor.pid = rootPid;
 			cursor.eid = eid;
-			fprintf(stdout, "ENTRY NOT FOUND BUT SHOULD BE AT PID%d Entry ID:%d\n",cursor.pid,cursor.eid);
+			//fprintf(stdout, "ENTRY NOT FOUND BUT SHOULD BE AT PID%d Entry ID:%d\n",cursor.pid,cursor.eid);
 			return rc;
 		} else {
 			cursor.pid = rootPid;
 			cursor.eid = eid;
-			fprintf(stdout, "ENTRY FOUND AT %d:%d\n",cursor.pid,cursor.eid);
+			//fprintf(stdout, "ENTRY FOUND AT %d:%d\n",cursor.pid,cursor.eid);
 			return 0;
 		}
 	}
@@ -444,7 +444,7 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	}
 	leaf.read(cursor.pid, pf);
 	leaf.print();
-	fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
+	//fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
 	
 	//if(rc!=0)
 	//	return rc;
@@ -455,24 +455,24 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	//	return rc;
 		
 	if(cursor.eid == leaf.getKeyCount()) {
-		cout<<"#####NEXT NODe PTR :: "<<leaf.getNextNodePtr()<<endl;
+		//cout<<"#####NEXT NODe PTR :: "<<leaf.getNextNodePtr()<<endl;
 		//At last key of leaf
 		if(leaf.getNextNodePtr() == 0){
 			//Next leaf node does not exist,reached end of index tree.
 			cursor.pid = -1;
-			fprintf(stdout, "Reached End of Tree while reading forward..\n");
+			//fprintf(stdout, "Reached End of Tree while reading forward..\n");
 			//return RC_END_OF_TREE;
 		} else {
 			//Sibling node exists
 			cursor.eid = 1;
 			cursor.pid = leaf.getNextNodePtr();
-			fprintf(stdout, "Read forward from sibling on page: %d", leaf.getNextNodePtr());
+			//fprintf(stdout, "Read forward from sibling on page: %d", leaf.getNextNodePtr());
 
 		}	
 	}
 	else{
 		cursor.eid++;
-		fprintf(stdout, "%s: %d\n","Reading forward from ",cursor.eid);
+		//fprintf(stdout, "%s: %d\n","Reading forward from ",cursor.eid);
 	}	
 	return 0;
 }
