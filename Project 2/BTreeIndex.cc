@@ -37,7 +37,6 @@ RC BTreeIndex::open(const string& indexname, char mode)
 {	RC rc;
 	char buffer[PageFile::PAGE_SIZE];
 
-
   if((rc = pf.open(indexname + ".idx", 'r'))< 0){
     cout<<"INDEX FILE Does not EXIST"<<endl;
     pf.open(indexname + ".idx", 'w');
@@ -453,14 +452,4 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 		cursor.eid++;
 	}	
 	return 0;
-}
-
-PageId BTreeIndex::getRootPid()
-{
-	return rootPid;
-}
-
-int BTreeIndex::getTreeHeight()
-{
-	return treeHeight;
 }
