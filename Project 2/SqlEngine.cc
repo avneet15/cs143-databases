@@ -10,7 +10,6 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
-#include <limits.h>
 #include <iostream>
 #include <fstream>
 #include "Bruinbase.h"
@@ -70,19 +69,14 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     bool useIndex = false; //to check if any valid select conditions exist, used for closing tree file too
     bool shouldFetch = false; //to check if any 'value' conditions exist or 
     
-    int max = INT_MAX;
-    int min = INT_MIN;
-    int equalVal = INT_MAX;
-    //bool flags
-    bool maxBool = false;
-    bool minBool = false;
-    bool equalValBool = false;
+    //bool isCondGE = false; // (is condition greater than or equal to?)
+    //bool isCondLE = false; // (is condition greater than or equal to?) 
+    int max = -1;
+    int min = -1;
+    int equalVal = -1;
     
-<<<<<<< HEAD
     //keep track of the index of a vital select condition
 
-=======
->>>>>>> e87dc32172767a46e40de1a9aab8e16424dd3b5a
   if(isIndex){
       //Open index file
          
@@ -108,10 +102,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           case SelCond::EQ:
             //fprintf(stdout, "IN EQUALS\n");
             equalVal = tempVal;
-<<<<<<< HEAD
-=======
-            equalValBool = true;
->>>>>>> e87dc32172767a46e40de1a9aab8e16424dd3b5a
             break;
           
           case SelCond::GT:
@@ -120,7 +110,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
             //isCondGE = false;
             min = tempVal + 1;
-            minBool = true;
             }
             break;
 
@@ -130,7 +119,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
             //fprintf(stdout, "IN LT\n");
             //isCondLE = true;
             max = tempVal - 1;
-            maxBool = true;
             }
             break;
 
@@ -140,7 +128,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
               fprintf(stdout, "IN GE\n");
             //isCondGE = true;
             min = tempVal;
-            minBool = true;
             }
             break;
 
@@ -150,7 +137,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
               fprintf(stdout, "IN LE\n");
             //isCondLE = true;
             max = tempVal;
-            maxBool = true;
             }
             break;
         }
@@ -261,7 +247,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
       if(rc < 0){
         //Set index cursor to next position which is > current key which is lower than search key
-        //cout<<"$$RECORD UNFOUND..";
+        cout<<" ONE MORE READ FWD......";
         tree.readForward(ic1, key, rid);
       }  
      } 

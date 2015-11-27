@@ -36,36 +36,50 @@ BTreeIndex::BTreeIndex()
 RC BTreeIndex::open(const string& indexname, char mode)
 {	RC rc;
 	char buffer[PageFile::PAGE_SIZE];
-<<<<<<< HEAD
-	if((rc = pf.open(indexname, mode)) < 0){
-=======
-	if((rc = pf.open(indexname,mode))< 0){
-		cout<<"INDEX NOT ALREADY PRESENT"<<endl;
->>>>>>> e87dc32172767a46e40de1a9aab8e16424dd3b5a
-		return rc;
+
+	switch(mode) {
+		case 'r':
+			if((rc = pf.open(indexname + ".idx", 'r'))< 0){
+				return rc;
+			} else {
+				pf.read(0,buffer);
+				char *p = buffer;
+				memcpy(&rootPid,p,BTLeafNode::PAGE_ID_SIZE);
+				memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE, sizeof(int));
+			}
+			break;
+
+		case 'w':
+			if((rc = pf.open(indexname + ".idx", 'r'))< 0){
+			   cout<<"INDEX FILE Does not EXIST"<<endl;
+			   pf.open(indexname + ".idx", 'w');
+
+			   char *p = buffer;
+			   rootPid = -1;
+			   treeHeight = 0;	
+			   memcpy(p, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
+			   memcpy(p+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
+			   pf.write(0, p);
+
+			   return 0;
+			 }  else {
+			 	cout<<"INDEX FILE EXISTs"<<endl;			   
+				pf.open(indexname,mode);
+		
+				//Fetching the first page of the index file to read in the Root Pid and the Tree Height.
+				pf.read(0,buffer);
+				char *p = buffer;
+
+				memcpy(&rootPid,p,BTLeafNode::PAGE_ID_SIZE);
+				memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE, sizeof(int));
+
+				fprintf(stdout, "OPENED INDEX FILE \n");
+			}
+			break;
+			}
+	   return 0;
 	}
-	//Fetching the first page of the index file to read in the Root Pid and the Tree Height.
-	pf.read(0,buffer);
-	char *p = buffer;
-	//if(p[0]) {
-		//Index has already been created so read the rootPid and tree height into the BTreeIndex
-	memcpy(&rootPid,p,BTLeafNode::PAGE_ID_SIZE);
-	memcpy(&treeHeight,p+BTLeafNode::PAGE_ID_SIZE, sizeof(int));
-	cout<<"ROOTPID AFTER memcpy:"<<rootPid<<endl;
-	cout<<"TREEHEIGHT AFTER memcpy:"<<treeHeight<<endl;
-	/*} else {
-		//Index is being created for the first time
-	rootPid = -1;
-	treeHeight = 0;		
-	memcpy(p, &rootPid, BTNonLeafNode::PAGE_ID_SIZE);
-	memcpy(p+BTNonLeafNode::PAGE_ID_SIZE, &treeHeight, sizeof(int));
-	pf.write(0, p);
 
-	}*/
-	fprintf(stdout, "OPENED INDEX FILE \n");
-
-    return 0;
-}
 
 /*
  * Close the index file.
@@ -343,7 +357,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 		fprintf(stdout, "LOCATING IN TREE WITH HT=1 and ROOT AT PAGE: %d\n",rootPid);
 		leaf.read(rootPid, pf);
 		leaf.print();
-		if(rc = leaf.locate(searchKey, eid) < 0){
+		if((rc = leaf.locate(searchKey, eid)) < 0){
 			cursor.pid = rootPid;
 			cursor.eid = eid;
 			fprintf(stdout, "ENTRY NOT FOUND BUT SHOULD BE AT PID%d Entry ID:%d\n",cursor.pid,cursor.eid);
@@ -418,7 +432,7 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	}
 	leaf.read(cursor.pid, pf);
 	leaf.print();
-	//fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
+	fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
 	
 	//if(rc!=0)
 	//	return rc;
@@ -429,24 +443,24 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	//	return rc;
 		
 	if(cursor.eid == leaf.getKeyCount()) {
-		//cout<<"#####NEXT NODe PTR :: "<<leaf.getNextNodePtr()<<endl;
+		cout<<"#####NEXT NODe PTR :: "<<leaf.getNextNodePtr()<<endl;
 		//At last key of leaf
 		if(leaf.getNextNodePtr() == 0){
 			//Next leaf node does not exist,reached end of index tree.
 			cursor.pid = -1;
-			//fprintf(stdout, "Reached End of Tree while reading forward..");
+			fprintf(stdout, "Reached End of Tree while reading forward..");
 			//return RC_END_OF_TREE;
 		} else {
 			//Sibling node exists
 			cursor.eid = 1;
 			cursor.pid = leaf.getNextNodePtr();
-			//fprintf(stdout, "Read forward from sibling on page: %d", leaf.getNextNodePtr());
+			fprintf(stdout, "Read forward from sibling on page: %d", leaf.getNextNodePtr());
 
 		}	
 	}
 	else{
-		//fprintf(stdout, "%s: %d\n","Reading forward from ",cursor.eid);
 		cursor.eid++;
+		fprintf(stdout, "%s: %d\n","Reading forward from ",cursor.eid);
 	}	
 	return 0;
 }
