@@ -61,11 +61,11 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   }
 
   if((rc=tree.open(table+".idx",'r')) < 0) {
-      cout<<"isIndex:"<<isIndex<<endl;
       isIndex = false;
+      cout<<"isIndex: false"<<isIndex<<endl;
   } else {
-    cout<<"isIndex:"<<isIndex<<endl;
     isIndex = true;
+    cout<<"isIndex: true"<<isIndex<<endl;
   }
 
    SelCond sc;
@@ -81,6 +81,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     bool equalValBool = false;
     
   if(isIndex){
+    cout<<"IM here"<<endl;
       //Open index file
          
     //check if any value conditions are conflicting

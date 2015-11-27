@@ -35,11 +35,12 @@ BTreeIndex::BTreeIndex()
  */
 RC BTreeIndex::open(const string& indexname, char mode)
 {	RC rc;
+	cout<<"Opening:"<<indexname<<endl;
 	char buffer[PageFile::PAGE_SIZE];
 
 	switch(mode) {
 		case 'r':
-		if((rc = pf.open(indexname + ".idx", 'r'))< 0){
+		if((rc = pf.open(indexname, 'r'))< 0){
 			return rc;
 		}
 		else {
@@ -56,9 +57,9 @@ RC BTreeIndex::open(const string& indexname, char mode)
 
 		case 'w':
 
-		if((rc = pf.open(indexname + ".idx", 'r'))< 0){
+		if((rc = pf.open(indexname, 'r'))< 0){
 		    cout<<"INDEX FILE Does not EXIST"<<endl;
-		    pf.open(indexname + ".idx", 'w');
+		    pf.open(indexname, 'w');
 
 		    char *p = buffer;
 		    rootPid = -1;
@@ -368,7 +369,7 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 		fprintf(stdout, "LOCATING IN TREE WITH HT=1 and ROOT AT PAGE: %d\n",rootPid);
 		leaf.read(rootPid, pf);
 		leaf.print();
-		if(rc = leaf.locate(searchKey, eid) < 0){
+		if((rc = leaf.locate(searchKey, eid)) < 0){
 			cursor.pid = rootPid;
 			cursor.eid = eid;
 			fprintf(stdout, "ENTRY NOT FOUND BUT SHOULD BE AT PID%d Entry ID:%d\n",cursor.pid,cursor.eid);
