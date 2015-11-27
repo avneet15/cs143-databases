@@ -59,7 +59,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   return rc;
   }
 
-  if((rc=tree.open(table+".idx",'r')) < 0) {
+  if((rc = tree.open(table+".idx",'r')) < 0) {
       isIndex = false;
   } else {
     isIndex = true;
@@ -76,7 +76,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     int equalVal = -1;
     
     //keep track of the index of a vital select condition
-    int condIndex = -1;
 
   if(isIndex){
       //Open index file
@@ -101,14 +100,13 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
         switch (cond[i].comp) {
           case SelCond::EQ:
-            fprintf(stdout, "IN EQUALS\n");
+            //fprintf(stdout, "IN EQUALS\n");
             equalVal = tempVal;
-            condIndex = i;
             break;
           
           case SelCond::GT:
             if(tempVal > min || min==-1) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
-            fprintf(stdout, "IN GT\n");
+            //fprintf(stdout, "IN GT\n");
 
             //isCondGE = false;
             min = tempVal + 1;
@@ -118,7 +116,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           case SelCond::LT:
             if(tempVal < max || max==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
             {
-            fprintf(stdout, "IN LT\n");
+            //fprintf(stdout, "IN LT\n");
             //isCondLE = true;
             max = tempVal - 1;
             }

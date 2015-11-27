@@ -36,7 +36,7 @@ BTreeIndex::BTreeIndex()
 RC BTreeIndex::open(const string& indexname, char mode)
 {	RC rc;
 	char buffer[PageFile::PAGE_SIZE];
-	if(rc = pf.open(indexname,mode) < 0){
+	if((rc = pf.open(indexname, mode)) < 0){
 		return rc;
 	}
 	//Fetching the first page of the index file to read in the Root Pid and the Tree Height.
@@ -442,14 +442,4 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 		cursor.eid++;
 	}	
 	return 0;
-}
-
-PageId BTreeIndex::getRootPid()
-{
-	return rootPid;
-}
-
-int BTreeIndex::getTreeHeight()
-{
-	return treeHeight;
 }
