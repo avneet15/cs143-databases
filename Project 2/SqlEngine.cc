@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <limits.h>
 #include <iostream>
 #include <fstream>
 #include "Bruinbase.h"
@@ -59,25 +60,28 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   return rc;
   }
 
-  if((rc = tree.open(table+".idx",'r')) < 0) {
+  if((rc=tree.open(table+".idx",'r')) < 0) {
       isIndex = false;
+      cout<<"isIndex: false"<<isIndex<<endl;
   } else {
     isIndex = true;
+    cout<<"isIndex: true"<<isIndex<<endl;
   }
 
    SelCond sc;
     bool useIndex = false; //to check if any valid select conditions exist, used for closing tree file too
     bool shouldFetch = false; //to check if any 'value' conditions exist or 
     
-    //bool isCondGE = false; // (is condition greater than or equal to?)
-    //bool isCondLE = false; // (is condition greater than or equal to?) 
-    int max = -1;
-    int min = -1;
-    int equalVal = -1;
+    int max = INT_MAX;
+    int min = INT_MIN;
+    int equalVal = INT_MAX;
+    //bool flags
+    bool maxBool = false;
+    bool minBool = false;
+    bool equalValBool = false;
     
-    //keep track of the index of a vital select condition
-
   if(isIndex){
+    cout<<"IM here"<<endl;
       //Open index file
          
     //check if any value conditions are conflicting
@@ -100,43 +104,48 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
         switch (cond[i].comp) {
           case SelCond::EQ:
-            //fprintf(stdout, "IN EQUALS\n");
+            fprintf(stdout, "IN EQUALS\n");
             equalVal = tempVal;
+            equalValBool = true;
             break;
           
           case SelCond::GT:
-            if(tempVal > min || min==-1) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
-            //fprintf(stdout, "IN GT\n");
+            if(tempVal > min || !minBool) {//if the tempVal min is larger than or equal to our current min (or it's uninitialized), set GT
+            fprintf(stdout, "IN GT\n");
 
             //isCondGE = false;
             min = tempVal + 1;
+            minBool = true;
             }
             break;
 
           case SelCond::LT:
-            if(tempVal < max || max==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
+            if(tempVal < max || !maxBool) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
             {
-            //fprintf(stdout, "IN LT\n");
+            fprintf(stdout, "IN LT\n");
             //isCondLE = true;
             max = tempVal - 1;
+            maxBool = true;
             }
             break;
 
           case SelCond::GE:
-            if(tempVal >= min || min==-1) //if the tempVal min is larger than our current min (or it's uninitialized), set GE
+            if(tempVal >= min || !minBool) //if the tempVal min is larger than our current min (or it's uninitialized), set GE
             {
               fprintf(stdout, "IN GE\n");
             //isCondGE = true;
             min = tempVal;
+            minBool = true;
             }
             break;
 
           case SelCond::LE:
-            if(tempVal <= max || max ==-1) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
+            if(tempVal <= max || !maxBool) //if the tempVal max is smaller than our current max (or it's uninitialized), set LE
             {
               fprintf(stdout, "IN LE\n");
             //isCondLE = true;
             max = tempVal;
+            maxBool = true;
             }
             break;
         }
@@ -235,12 +244,12 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     useIndex = true; //set this in order to close index properly
     fprintf(stdout, " IN INDEX\n");
     //set the starting position for IndexCursor ic1
-    if(equalVal != -1) {
+    if(equalValBool) {
       fprintf(stdout, "SEARCHING KEY WITH ==\n");//key must be equalVal
       tree.locate(equalVal, ic1);
       //cout<<"Finished locating";
      } 
-    else if(min != -1) {//Min is defined
+    else if(minBool) {//Min is defined
       fprintf(stdout, "SEARCHING KEY WITH >\n");
       rc = tree.locate(min, ic1);
       cout<<"$$ I...C..."<<ic1.pid<<"..."<<ic1.eid<<"\n";
@@ -254,6 +263,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     else{
       fprintf(stdout, "SEARCHING KEY FROM BEGINNING \n");
       //tree.locate(0, ic1);
+      //since we know first record is at pid=1 and eid=1, so it's hard coded here:
       ic1.pid = 1;
       ic1.eid = 1;
     } 
@@ -261,17 +271,17 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     while(tree.readForward(ic1, key, rid) == 0)
     {
       //cout<<"IN WHILE....";
-       if(equalVal!=-1 && key!=equalVal)
+       if(equalValBool && key!=equalVal)
             goto rangeExceeded;
           
-          if(max!=-1) //if there is a condition on LT or LE that fails, we are done
+          if(maxBool) //if there is a condition on LT or LE that fails, we are done
           {
             if(key>max)
               goto rangeExceeded;
             
           }
           
-          if(min!=-1) //if there is a condition on GT or GE that fails, we are done
+          if(minBool) //if there is a condition on GT or GE that fails, we are done
           {
             if(key < min)
               goto rangeExceeded;
@@ -411,8 +421,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
  
   if(index)
   {
-  //isIndex = true;
-  //fprintf(stdout, "WRITING IN INDEX \n");
+
   tree.open(table + ".idx", 'w');
   int z=1;
     while(getline(tableData, line))
@@ -428,7 +437,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
         z++;
       }
     }
-    //tree.print();
+
   tree.close();
   }
   else
