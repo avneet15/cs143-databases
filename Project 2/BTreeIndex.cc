@@ -146,7 +146,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 			leaf.read(rootPid, pf);
 			//fprintf(stdout, "TRYING TO INSERT IN LEAF AT PAGE ID:%d \n", rootPid);
 			if((rc = leaf.insert(key, rid)) < 0) {
-				cout<<"insert failed so callingg insertAndSplit"<<endl;
+				cout<<"insert failed so calling insertAndSplit"<<endl;
 				BTLeafNode sibling;
 				int siblingKey;
 				PageId siblingPid = pf.endPid();
@@ -285,6 +285,8 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 				} else {
 					//cout<<"INSERTION IS COMPLETED FOR LEVEL "<<currHeight<<"\n";
 					root.write(curr_pid, pf);
+					cout<<"Printing curr node where insertion just happened: at level "<<currHeight<<endl;
+					root.print();
 					return 0;
 				}
 
@@ -443,7 +445,7 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	}
 	leaf.read(cursor.pid, pf);
 	leaf.print();
-	//fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
+	fprintf(stdout, " READING FROM INDEX CURSOR: %d %d \n",cursor.pid,cursor.eid);
 	
 	//if(rc!=0)
 	//	return rc;

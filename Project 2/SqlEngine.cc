@@ -154,11 +154,11 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         shouldFetch = true;
       }
     }
-      //fprintf(stdout, "%d %d %d\n",max,min,equalVal);
+      fprintf(stdout, "%d %d %d\n",max,min,equalVal);
   }
-  /*cout<<"\nNumber of conditions = "<<cond.size();
+  //cout<<"\nNumber of conditions = "<<cond.size();
   cout<<" USE INDEX? "<<useIndex;
-  cout<<" Fetch records? "<<shouldFetch<<"\n"; */
+  cout<<" Fetch records? "<<shouldFetch<<"\n";
   
   //if the index file does not exist, use normal select
   //similarly, unless we are interested in a count(*) without conditions, an empty condition array means we use normal select
@@ -166,7 +166,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   if(!SqlEngine::isIndex|| (!useIndex))
   {
     // scan the table file from the beginning
-    //cout<<"\nScanning from table directly..\n";
+    cout<<"\nScanning from table directly..\n";
     rid.pid = rid.sid = 0;
     count = 0;
     while (rid < rf.endRid()) {
@@ -426,7 +426,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
       parseLoadLine(line, key, value);
       if(rf.append(key, value, rid)!=0)
         return RC_FILE_WRITE_FAILED;
-      cout<<"----------------INSERTING ENTRY NO: "<<z<<"-----------------------------------------\n";
+      cout<<"----------------INSERTING ENTRY NO: "<<z<<" KEY: "<<key<<"-----------------------------------------\n";
       
       if(tree.insert(key, rid)!=0) {
         return RC_FILE_WRITE_FAILED;  

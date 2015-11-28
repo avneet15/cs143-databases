@@ -135,15 +135,12 @@ RC PageFile::read(PageId pid, void* buffer) const
 
   if (pid < 0 || pid >= epid) return RC_INVALID_PID; 
 
-  //
   // if the page is in cache, read it from there
-  //
   for (int i = 0; i < CACHE_COUNT; i++) {
     if (readCache[i].fd == fd && readCache[i].pid == pid && 
         readCache[i].lastAccessed != 0) {
        memcpy(buffer, readCache[i].buffer, PAGE_SIZE);
        readCache[i].lastAccessed = ++cacheClock;
-       //fprintf(stdout, "NOT READING PAGE KHALI FOKAT => BECAUSE CACHED\n");
        return 0;
     }
   }
@@ -173,7 +170,7 @@ RC PageFile::read(PageId pid, void* buffer) const
   memcpy(buffer, readCache[toEvict].buffer, PAGE_SIZE);
 
   // increase the page read count
-  //fprintf(stdout, "READ PAGE: %d  of FD =%d \n",pid,fd);
+  fprintf(stdout, "READ PAGE: %d  of FD =%d \n",pid,fd);
   readCount++;
 
   return 0;
