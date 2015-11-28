@@ -17,8 +17,10 @@ void BTLeafNode::print()
 	int key;
 	RecordId rid;
 	char * p = buffer;
-/*
-	for(int i=1; i<=getKeyCount(); i++)
+	int rec = 0;
+	memcpy(&rec, p, sizeof(int));
+	cout<<"\n COUNT:: "<<rec;
+	for(int i=1; i<=rec; i++)
 	{
 	readEntry(i, key, rid);
 	cout << "--Entry ID: "<<i;	
@@ -27,11 +29,8 @@ void BTLeafNode::print()
 	cout << " RID.SID "<<rid.sid <<" --- ";
 	}
 	PageId nextPtr;
-	memcpy(&nextPtr, p+(getKeyCount()*LEAF_ENTRY_SIZE),PAGE_ID_SIZE);
-	cout<<" -> "<<nextPtr<<endl;
-*/	
-	
-	
+	memcpy(&nextPtr, p+(rec*LEAF_ENTRY_SIZE)+sizeof(int), PAGE_ID_SIZE);
+	cout<<" -> "<<nextPtr<<endl;	
 }
 
 /*
@@ -151,59 +150,47 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
  */
 RC BTLeafNode::insertAndSplit(int key, const RecordId& rid, 
                               BTLeafNode& sibling, int& siblingKey)
-{ 	RC rc;
+{ 	
+	
+	int eid;
+	int curr_key;
+	RecordId curr_rid;
+	for(eid=1; eid<=MAX_KEYS; eid++) {
+		readEntry(eid,curr_key,curr_rid);
+		if(curr_key>key){
+			break;
+		} 
+	}
+	
 	char *p = buffer;
-	int no_of_records = getKeyCount();
-	//if(no_of_records > 70 || sibling.getKeyCount() >70) {
-	//	return RC_NODE_FULL;
-	//}
-	if(rid.pid<0 || rid.sid<0 || rid.sid > RecordFile::RECORDS_PER_PAGE){
-		return RC_INVALID_RID;
-	}
+	p = (p+((eid-1)*LEAF_ENTRY_SIZE)+sizeof(int));
+  
+  	memmove(p+LEAF_ENTRY_SIZE,p,((MAX_KEYS-(eid-1))*LEAF_ENTRY_SIZE)+PAGE_ID_SIZE);
+  	memcpy(p,&rid,RECORD_ID_SIZE);
+  	memcpy(p+RECORD_ID_SIZE,&key,KEY_SIZE);
 
-	//cout<<"NO OF RECORDS--> "<<no_of_records;
-	int mid_record = (no_of_records+1)/2;
-	char *next_p = sibling.buffer;
-	
+  	//moving into sibling buffer
+  	int midIndex = (MAX_KEYS+1)/2;
+  	cout<< "midIndex="<< midIndex<<endl;
+  	int currNoKeys = midIndex;
+  	int siblingNoKeys = (MAX_KEYS/2) + 1;
+  	cout<< "siblingNoKeys= "<<siblingNoKeys<<endl;
 
-	//cout<<"MID INDEX = "<<mid_record<<"\n";
-	//int next = mid_record+1;
-	int mid_key;
-	RecordId mid_rid;
-	//Prev key is the last key in current leaf node which was just split
-	//cout<<"NEXT INDEX = "<<next<<"\n";
-	readEntry(mid_record, mid_key, mid_rid);
+  	p = buffer;
+  	//init 1st 4 bytes to no of keys
+  	memmove(sibling.buffer, &siblingNoKeys, KEY_SIZE);
+  	memmove(sibling.buffer + KEY_SIZE, p + 4 + (midIndex*LEAF_ENTRY_SIZE), PageFile::PAGE_SIZE - (midIndex*LEAF_ENTRY_SIZE) + KEY_SIZE);
+  	cout<<"Printing sibling:"<<endl;
+  	sibling.print();
+  	std::fill(buffer + 4 + (midIndex*LEAF_ENTRY_SIZE), buffer + PageFile::PAGE_SIZE , 0);
+  	//init 1st 4 bytes to no of keys
+  	memmove(buffer, &currNoKeys, KEY_SIZE);
+  	cout<<"Printing leaf:"<<endl;
+  	print();
+  	memcpy(&siblingKey, sibling.buffer  + KEY_SIZE + RECORD_ID_SIZE, KEY_SIZE);
+  	cout<<"RETURNING SIBLING KEY  = "<< siblingKey <<endl;
+	return 0;
 
-	//Ensuring sibling's first 4 bytes i.e key size is not some garbage value
-	//memcpy(next_p, 0, sizeof(int));
-
-
-
-	//cout<<"MID_KEY = "<<mid_key;
-	if(key < mid_key){
-		memmove(next_p + sizeof(int),p+(LEAF_ENTRY_SIZE*(mid_record-1))+sizeof(int),((no_of_records-(mid_record-1))*LEAF_ENTRY_SIZE)+PAGE_ID_SIZE);
-		//Set lower half to 0's
-		std::fill(p+(LEAF_ENTRY_SIZE*(mid_record-1))+sizeof(int),p+PageFile::PAGE_SIZE, 0); //init buffer
-		//cout<<"INSERT AND SPLIT:: Inserting in old node "<<key;
-		insert(key,rid);
-
-	} else {
-		memmove(next_p + sizeof(int),p+(LEAF_ENTRY_SIZE*(mid_record))+sizeof(int),((no_of_records-(mid_record))*LEAF_ENTRY_SIZE)+PAGE_ID_SIZE);
-		//Set lower half to 0's
-		std::fill(p+(LEAF_ENTRY_SIZE*(mid_record))+sizeof(int),p+PageFile::PAGE_SIZE, 0); //init buffer
-		sibling.insert(key,rid);
-		//cout<<"INSERT AND SPLIT:: Inserting in sibling node "<<key;
-
-	}
-
-	//Passing sibling key to be inserted in parent 
-	memcpy(&siblingKey, next_p+sizeof(int)+RECORD_ID_SIZE, KEY_SIZE);
-
-	
-	//cout<<"SIBLING KEY PASSED ABOVE= "<<siblingKey<<"\n";
-	//cout<<"Current node: \n";
-	print();
-	return 0; 
 }
 
 /**
@@ -310,7 +297,7 @@ std::fill(buffer, buffer + PageFile::PAGE_SIZE, 0); //init buffer
 void BTNonLeafNode::print()
 {int key;
 	PageId pid;
-	/*
+	
 	for(int i=1; i<= getKeyCount(); i++)
 	{
 	readEntryNonLeaf(i, key, pid);
@@ -319,7 +306,7 @@ void BTNonLeafNode::print()
 	cout << " PID "<<pid<<endl;	
 		
 	}
-	*/
+	
 	
 }
 RC BTNonLeafNode::read(PageId pid, const PageFile& pf)

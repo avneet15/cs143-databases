@@ -258,7 +258,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
       }  
      } 
     else{
-      fprintf(stdout, "SEARCHING KEY FROM BEGINNING \n");
+      //fprintf(stdout, "SEARCHING KEY FROM BEGINNING \n");
       //tree.locate(0, ic1);
       //since we know first record is at pid=1 and eid=1, so it's hard coded here:
       ic1.pid = 1;
@@ -426,7 +426,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
       parseLoadLine(line, key, value);
       if(rf.append(key, value, rid)!=0)
         return RC_FILE_WRITE_FAILED;
-      //cout<<"----------------INSERTING ENTRY NO: "<<z<<"-----------------------------------------\n";
+      cout<<"----------------INSERTING ENTRY NO: "<<z<<"-----------------------------------------\n";
       
       if(tree.insert(key, rid)!=0) {
         return RC_FILE_WRITE_FAILED;  

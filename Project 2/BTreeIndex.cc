@@ -142,50 +142,49 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	} else {
 		//If only leaf root exists yet
 		if(treeHeight == 1) {
-			//fprintf(stdout, "AD : %d\n", pid);
 			//fprintf(stdout, "INSERTING IN TREE_HEIGHT = 1\n");
 			leaf.read(rootPid, pf);
 			//fprintf(stdout, "TRYING TO INSERT IN LEAF AT PAGE ID:%d \n", rootPid);
 			if((rc = leaf.insert(key, rid)) < 0) {
+				cout<<"insert failed so callingg insertAndSplit"<<endl;
 				BTLeafNode sibling;
 				int siblingKey;
 				PageId siblingPid = pf.endPid();
-				//fprintf(stdout, "Newly created Sibling Pid is : %d\n", siblingPid);
+				fprintf(stdout, "Newly created Sibling Pid is : %d\n", siblingPid);
 				sibling.read(siblingPid, pf);
 
 				leaf.insertAndSplit(key, rid, sibling, siblingKey);
 
-				//sibling.setNextNodePtr(leaf.getNextNodePtr());
+				//sibling.setNextNodePtr(leaf.getNextNodePtr()); -- not needed anymore!
 				leaf.setNextNodePtr(siblingPid);
 
-				//cout<<"***PRINTING CURRENT: \n";
+				cout<<"***PRINTING CURRENT: \n";
 				leaf.print();
 
 				leaf.write(rootPid, pf);
 
-				//cout<<"***PRINTING SIBLING: \n";
+				cout<<"***PRINTING SIBLING: \n";
 				sibling.print();
 
-				//fprintf(stdout, "Existing Root Pid : %d\n", rootPid);
+				
 				
 				sibling.write(siblingPid, pf);
-				//fprintf(stdout, "NEWLY CREATED SIBLING PID : %d\n", siblingPid);
+				
 				PageId new_root_pid = pf.endPid();
 				root.read(new_root_pid, pf);
 				root.initializeRoot(rootPid, siblingKey, siblingPid);
-				//cout<<"Newly created ROOT PID: WITH LEFT PTR = "<<rootPid<<" RIGHT PTR = "<<siblingPid<<"\n";
+				cout<<"Newly created ROOT PID: WITH LEFT PTR = "<<rootPid<<" RIGHT PTR = "<<siblingPid<<"\n";
 
-				//fprintf(stdout, "CC : %d\n", siblingPid);
 				root.write(new_root_pid, pf);
-				//cout<<"ROOT IS::\n";
+				cout<<"ROOT IS::\n";
 				root.print();
 				rootPid = new_root_pid;
 				treeHeight = treeHeight + 1;
-				//fprintf(stdout, "New tree height : %d\n", treeHeight);
+				fprintf(stdout, "New tree height : %d\n", treeHeight);
 				return 0;
 			} else {
 				leaf.write(rootPid, pf);
-				//fprintf(stdout, "Inserting in Leaf Root with rootPid at : %d\n", rootPid);
+				fprintf(stdout, "Inserting in Leaf Root with rootPid at : %d\n", rootPid);
 				leaf.print();
 				return 0;
 			}
@@ -320,7 +319,7 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 			//Printing current and sibling
 			//cout<<"\n Current leaf node::\n";
 			leaf.print();
-			cout<<"\n Current sibling node::\n";
+			//cout<<"\n Current sibling node::\n";
 			sibling.print();
 
 
