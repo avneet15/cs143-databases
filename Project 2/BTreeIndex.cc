@@ -137,7 +137,6 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 			leaf.read(rootPid, pf);
 			//fprintf(stdout, "TRYING TO INSERT IN LEAF AT PAGE ID:%d \n", rootPid);
 			if((rc = leaf.insert(key, rid)) < 0) {
-				//cout<<"insert failed so calling insertAndSplit"<<endl;
 				BTLeafNode sibling;
 				int siblingKey;
 				PageId siblingPid = pf.endPid();
@@ -149,12 +148,10 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				//sibling.setNextNodePtr(leaf.getNextNodePtr()); -- not needed anymore!
 				leaf.setNextNodePtr(siblingPid);
 
-				//cout<<"***PRINTING CURRENT: \n";
 				//leaf.print();
 
 				leaf.write(rootPid, pf);
 
-				//cout<<"***PRINTING SIBLING: \n";
 				//sibling.print();
 
 				
@@ -164,10 +161,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 				PageId new_root_pid = pf.endPid();
 				root.read(new_root_pid, pf);
 				root.initializeRoot(rootPid, siblingKey, siblingPid);
-				//cout<<"Newly created ROOT PID: WITH LEFT PTR = "<<rootPid<<" RIGHT PTR = "<<siblingPid<<"\n";
 
 				root.write(new_root_pid, pf);
-				//cout<<"ROOT IS::\n";
 				//root.print();
 				rootPid = new_root_pid;
 				treeHeight = treeHeight + 1;
@@ -182,22 +177,17 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 		} else {
 				//More than 1 level exists
 				root.read(rootPid, pf);
-				//cout<<"****ROOT PID = "<<rootPid;
 				locate(key, c);
-				//cout<<"\n $$$LOCATE INSIDE INSERT ..PID"<<c.pid<<"\n";
-				//cout<<"CURSOR AT "<<c.pid<<":"<<c.eid;
 				int siblingKey;
 				PageId lowerPid;
 				int insertHt = -1;
 				leaf.read(c.pid, pf);
 				//fprintf(stdout, "ENTRY TO BE INSERTED IN PAGE:: %d\n", c.pid);
 				if((rc = leaf.insert(key, rid)) < 0) {
-					//cout<<"ENTERING RECURSIVE INSERT...\n";
 					recursiveInsert(key, rid, rootPid, 1, insertHt, siblingKey, lowerPid);
 					//fprintf(stdout, "FINISHED RECURSIVE INSERT\n");
 				} else {
 					// Else insert was successful in leaf
-					//cout<<"Normal insertion of leaf in PID: "<<c.pid<<"\n";
 					leaf.write(c.pid, pf);
 					//fprintf(stdout, "HH : %d\n", pid);
 					return 0;
@@ -226,10 +216,8 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 			//Now insert it in parent which is at insertHeight
 			if(currHeight == insertHeight){
 				//Insert in parent node
-				//cout<<"INSERTING AT UPPER LEVEL HAVING PID = "<<curr_pid<<" INSERT KEY = "<<siblingKey<<"INSERT PID  = "<<siblingPid<<"\n";
 				if(root.insert(siblingKey, siblingPid) < 0) {
 					//Insert and split current node
-					//cout<<"INSERTING AND SPLITTING AT LEVEL"<<currHeight<<"\n";
 					BTNonLeafNode new_sibling;
 					//int siblingKey;
 					//PageId 
@@ -239,9 +227,7 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 					new_sibling.read(new_sibling_Pid, pf);
 					root.insertAndSplit(siblingKey, siblingPid, new_sibling, siblingKey);
 
-					//cout<<"**CURRENT NODE::"<<"\n";
 					//root.print();
-					//cout<<"**SIBLING NODE::"<<"\n";
 					//new_sibling.print();
 
 					//Writing current and sibling node
@@ -260,23 +246,15 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 						BTNonLeafNode new_root;
 						PageId new_root_pid = pf.endPid();
 						new_root.initializeRoot(curr_pid, siblingKey, new_sibling_Pid);
-						//cout<<"LEFT PAGE:: "<<curr_pid<<" RIGHT PAGE:: "<<new_sibling_Pid<<"\n";
 						new_root.write(new_root_pid, pf);
 						rootPid = new_root_pid;
 						treeHeight = treeHeight + 1;
-						//cout<<"TREE HEIGHT IS NOW "<<treeHeight<<"\n";
-						//cout<<"INSERTION IS COMPLETED AND NEW ROOT CREATED AT PID: "<<rootPid<<"\n";
-						//cout<<"NEW ROOT IS::\n";
 						//new_root.print();
-						//cout<<"\n";
 						return 0;
 					}
-					//cout<<"CURRENT LEAF::\n";
 					//root.print();
 				} else {
-					//cout<<"INSERTION IS COMPLETED FOR LEVEL "<<currHeight<<"\n";
 					root.write(curr_pid, pf);
-					//cout<<"Printing curr node where insertion just happened: at level "<<currHeight<<endl;
 					//root.print();
 					return 0;
 				}
@@ -286,7 +264,6 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 				return 0;
 			}
 		} else {
-			//cout<<"REACHED LEAF FOR INSERTION AT PID::"<<curr_pid<<"\n";
 			BTLeafNode leaf;
 			leaf.read(curr_pid, pf);
 
@@ -299,7 +276,6 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 			//Insert and Split using Sibling
 			//Retrieve leaf's next Node Pointer
 			PageId next_node_ptr = leaf.getNextNodePtr();
-			//cout<<"LEAFS's NEXT NODE PTR = "<<next_node_ptr;
 			sibling.read(siblingPid, pf);
 			leaf.insertAndSplit(key, rid, sibling, siblingKey);
 
@@ -310,9 +286,7 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 			//fprintf(stdout, "NEW SIBLING PID : %d AND SIBLING KEY = %d \n", siblingPid, siblingKey);
 
 			//Printing current and sibling
-			//cout<<"\n Current leaf node::\n";
 			leaf.print();
-			//cout<<"\n Current sibling node::\n";
 			sibling.print();
 
 
@@ -376,24 +350,19 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 
 	BTNonLeafNode root;
 	root.read(rootPid, pf);
-	//cout<<"ROOT PID INSIDE LOCATE: "<<rootPid;
 	if(root.getKeyCount() <= 0){
 		return RC_END_OF_TREE;
 	}
 	PageId pid = search(searchKey, root, 1);
-	//cout<<"Looking for key in Page: "<<pid<<"\n";
 	leaf.read(pid, pf);
 	cursor.pid = pid;
 
 	if((rc = leaf.locate(searchKey, eid)) < 0){
-		//cout<<"Setting cursor to PID: "<<cursor.pid;
-		//cout<<"AAAAAAA..."<<rc;
 		cursor.eid = eid;
 		return rc;
 	}
 
 	cursor.eid = eid;
-	//cout<<"Setting cursor to PID: "<<cursor.pid;
     return 0;
 }
 
@@ -402,12 +371,9 @@ PageId BTreeIndex::search(int searchKey, BTNonLeafNode current, int current_leve
 { 	PageId pid;
 	BTLeafNode leaf;
 	current.locateChildPtr(searchKey, pid);
-	//cout<<"\nSEARCHING IN CURRENT PAGE: \n";
 	//current.print();
-	//cout <<"LOCATED CHILD PTR AT PAGE :: \n"<<pid; 
 
 	if(current_level ==  treeHeight - 1) {
-		//cout<<"\n ^^^^SEARCH RETURNS PID:: "<<pid;
 		return pid;
   	} else {
   		BTNonLeafNode non_leaf;
@@ -447,7 +413,6 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	//	return rc;
 		
 	if(cursor.eid == leaf.getKeyCount()) {
-		//cout<<"#####NEXT NODe PTR :: "<<leaf.getNextNodePtr()<<endl;
 		//At last key of leaf
 		if(leaf.getNextNodePtr() == 0){
 			//Next leaf node does not exist,reached end of index tree.

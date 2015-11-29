@@ -62,10 +62,8 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
   if((rc=tree.open(table+".idx",'r')) < 0) {
       isIndex = false;
-      //cout<<"isIndex: false"<<isIndex<<endl;
   } else {
     isIndex = true;
-    //cout<<"isIndex: true"<<isIndex<<endl;
   }
 
    SelCond sc;
@@ -156,9 +154,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     }
       //fprintf(stdout, "%d %d %d\n",max,min,equalVal);
   }
-  //cout<<"\nNumber of conditions = "<<cond.size();
-  //cout<<" USE INDEX? "<<useIndex;
-  //cout<<" Fetch records? "<<shouldFetch<<"\n";
   
   //if the index file does not exist, use normal select
   //similarly, unless we are interested in a count(*) without conditions, an empty condition array means we use normal select
@@ -166,7 +161,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   if(!isIndex|| (!useIndex))
   {
     // scan the table file from the beginning
-    //cout<<"\nScanning from table directly..\n";
     rid.pid = rid.sid = 0;
     count = 0;
     while (rid < rf.endRid()) {
@@ -244,16 +238,13 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     if(equalValBool) {
       //fprintf(stdout, "SEARCHING KEY WITH ==\n");//key must be equalVal
       tree.locate(equalVal, ic1);
-      //cout<<"Finished locating";
      } 
     else if(minBool) {//Min is defined
       //fprintf(stdout, "SEARCHING KEY WITH >\n");
       rc = tree.locate(min, ic1);
-      //cout<<"$$ I...C..."<<ic1.pid<<"..."<<ic1.eid<<"\n";
 
       if(rc < 0){
         //Set index cursor to next position which is > current key which is lower than search key
-        //cout<<" ONE MORE READ FWD......";
         tree.readForward(ic1, key, rid);
       }  
      } 
@@ -267,7 +258,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     
     while(tree.readForward(ic1, key, rid) == 0)
     {
-      //cout<<"IN WHILE....";
        if(equalValBool && key!=equalVal)
             goto rangeExceeded;
           
@@ -296,7 +286,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
               fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
               goto faultyTuple;
             } else {
-              //cout<<"\nReading from table..\n";
             }
 
               for (unsigned i = 0; i < cond.size(); i++)
@@ -426,7 +415,6 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
       parseLoadLine(line, key, value);
       if(rf.append(key, value, rid)!=0)
         return RC_FILE_WRITE_FAILED;
-      //cout<<"----------------INSERTING ENTRY NO: "<<z<<" KEY: "<<key<<"-----------------------------------------\n";
       
       if(tree.insert(key, rid)!=0) {
         return RC_FILE_WRITE_FAILED;  
