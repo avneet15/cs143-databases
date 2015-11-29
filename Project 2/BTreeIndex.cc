@@ -276,7 +276,7 @@ RC BTreeIndex::recursiveInsert(int key, const RecordId& rid, PageId curr_pid, in
 				} else {
 					//cout<<"INSERTION IS COMPLETED FOR LEVEL "<<currHeight<<"\n";
 					root.write(curr_pid, pf);
-					cout<<"Printing curr node where insertion just happened: at level "<<currHeight<<endl;
+					//cout<<"Printing curr node where insertion just happened: at level "<<currHeight<<endl;
 					//root.print();
 					return 0;
 				}
