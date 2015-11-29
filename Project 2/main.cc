@@ -23,7 +23,7 @@
 #include "RecordFile.h"
 #include "BTreeNode.h" 
 
- bool SqlEngine::isIndex = false;
+ //bool SqlEngine::isIndex = false;
 
 int main()
 {

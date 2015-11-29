@@ -29,7 +29,7 @@ struct SelCond {
 class SqlEngine {
  public:
 
-  static bool isIndex;
+  //static bool isIndex;
   //static extern bool isIndex;
 
 

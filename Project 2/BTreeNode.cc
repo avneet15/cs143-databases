@@ -19,7 +19,7 @@ void BTLeafNode::print()
 	char * p = buffer;
 	int rec = 0;
 	memcpy(&rec, p, sizeof(int));
-	cout<<"\n COUNT:: "<<rec;
+	//cout<<"\n COUNT:: "<<rec;
 	for(int i=1; i<=rec; i++)
 	{
 	readEntry(i, key, rid);
@@ -30,7 +30,7 @@ void BTLeafNode::print()
 	}
 	PageId nextPtr;
 	memcpy(&nextPtr, p+(rec*LEAF_ENTRY_SIZE)+sizeof(int), PAGE_ID_SIZE);
-	cout<<" -> "<<nextPtr<<endl;	
+	//cout<<" -> "<<nextPtr<<endl;	
 }
 
 /*
@@ -170,24 +170,24 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 
 	//moving into sibling buffer
 	int midIndex = (MAX_KEYS+1)/2;
-	cout<< "midIndex="<< midIndex<<endl;
+	//cout<< "midIndex="<< midIndex<<endl;
 	int currNoKeys = midIndex;
 	int siblingNoKeys = (MAX_KEYS/2) + 1;
-	cout<< "siblingNoKeys= "<<siblingNoKeys<<endl;
+	//cout<< "siblingNoKeys= "<<siblingNoKeys<<endl;
 
 	p = buffer;
 	//init 1st 4 bytes to no of keys
 	memmove(sibling.buffer, &siblingNoKeys, KEY_SIZE);
 	memmove(sibling.buffer + KEY_SIZE, p + KEY_SIZE + (midIndex*LEAF_ENTRY_SIZE), PageFile::PAGE_SIZE - (midIndex*LEAF_ENTRY_SIZE) + KEY_SIZE);
-	cout<<"Printing sibling:"<<endl;
-	sibling.print();
+	//cout<<"Printing sibling:"<<endl;
+	//sibling.print();
 	std::fill(buffer + 4 + (midIndex*LEAF_ENTRY_SIZE), buffer + PageFile::PAGE_SIZE , 0);
 	//init 1st 4 bytes to no of keys
 	memmove(buffer, &currNoKeys, KEY_SIZE);
-	cout<<"Printing leaf:"<<endl;
-	print();
+	//cout<<"Printing leaf:"<<endl;
+	//print();
 	memcpy(&siblingKey, sibling.buffer  + KEY_SIZE + RECORD_ID_SIZE, KEY_SIZE);
-	cout<<"RETURNING SIBLING KEY  = "<< siblingKey <<endl;
+	//cout<<"RETURNING SIBLING KEY  = "<< siblingKey <<endl;
 	
 	return 0;
 }
@@ -296,7 +296,7 @@ std::fill(buffer, buffer + PageFile::PAGE_SIZE, 0); //init buffer
 void BTNonLeafNode::print()
 {int key;
 	PageId pid;
-	
+	/*
 	for(int i=1; i<= getKeyCount(); i++)
 	{
 	readEntryNonLeaf(i, key, pid);
@@ -305,6 +305,7 @@ void BTNonLeafNode::print()
 	cout << " PID "<<pid<<endl;	
 		
 	}
+	*/
 	
 	
 }
@@ -429,10 +430,10 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 
 	//moving into sibling buffer
 	int midIndex = (MAX_KEYS)/2 + 1;
-	cout<< "midIndex="<< midIndex<<endl;
+	//cout<< "midIndex="<< midIndex<<endl;
 	int currNoKeys = MAX_KEYS/2;
 	int siblingNoKeys = (MAX_KEYS+1)/2;
-	cout<< "siblingNoKeys= "<<siblingNoKeys<<endl;
+	//cout<< "siblingNoKeys= "<<siblingNoKeys<<endl;
 
 	p = buffer;
 	//init 1st 4 bytes to no of keys
@@ -443,15 +444,15 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 	memmove(sibling.buffer + KEY_SIZE, &midPid, KEY_SIZE);
 	memmove(sibling.buffer + (2*KEY_SIZE), p + (2*KEY_SIZE) + (midIndex*NON_LEAF_ENTRY_SIZE), PageFile::PAGE_SIZE - (midIndex*NON_LEAF_ENTRY_SIZE) + (2*KEY_SIZE));
 
-	cout<<"Printing sibling:"<<endl;
-	sibling.print();
+	//cout<<"Printing sibling:"<<endl;
+	//sibling.print();
 	std::fill(buffer + (2*KEY_SIZE) + ((midIndex-1)*NON_LEAF_ENTRY_SIZE), buffer + PageFile::PAGE_SIZE , 0);
 	//init 1st 4 bytes to no of keys
 	memmove(buffer, &currNoKeys, KEY_SIZE);
-	cout<<"Printing leaf:"<<endl;
-	print();
+	//cout<<"Printing leaf:"<<endl;
+	//print();
 	
-	cout<<"RETURNING SIBLING/Mid KEY to above level = "<< midKey <<endl;
+	//cout<<"RETURNING SIBLING/Mid KEY to above level = "<< midKey <<endl;
 	
 	return 0;
 
